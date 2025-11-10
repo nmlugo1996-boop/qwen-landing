@@ -28,7 +28,9 @@
   .btn-primary:hover{transform:scale(1.05);box-shadow:0 18px 34px rgba(255,155,66,.32)}
   .btn-ghost{background:#fff;border:1px solid rgba(58,46,31,.22);color:#5f4a32}
   .btn-ghost:hover{background:#fdf0e1}
-  #gen-status{font-size:12px;color:var(--muted);margin-left:12px}
+  .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px}
+  .error-text{font-size:12px;color:#dc2626}
+  #gen-status{font-size:12px;color:var(--muted)}
   #gen-status.ok{color:#16a34a} #gen-status.err{color:#dc2626}
   #gen-out{background:#fff;border:1px solid rgba(58,46,31,.12);border-radius:20px;padding:20px;min-height:170px;white-space:pre-wrap;box-shadow:0 12px 28px rgba(0,0,0,.08)}
   @media(max-width:720px){.row{grid-template-columns:1fr}.btn{width:100%}.card{padding:28px}}
@@ -85,10 +87,11 @@
       <input id="packImage" type="file" accept="image/*"/>
     </label>
 
-    <div style="display:flex;gap:10px;margin-top:12px">
+    <div class="actions">
       <button id="gen" class="btn btn-primary">Сгенерировать паспорт</button>
       <button id="docx" class="btn btn-ghost" disabled>Скачать DOCX</button>
       <span id="gen-status">Готово</span>
+      <span id="gen-error" class="error-text"></span>
     </div>
   </div>
 
@@ -101,6 +104,11 @@
 <script>
 const $ = s=>document.querySelector(s);
 let BASE = null, packImageDataURL = null, PASSPORT = null;
+const statusEl = $("#gen-status");
+const errorEl = $("#gen-error");
+const previewEl = $("#gen-out");
+const genBtn = $("#gen");
+const docxBtn = $("#docx");
 
 async function loadBase(){
   const r = await fetch('/base.json'); BASE = await r.json();
@@ -135,38 +143,115 @@ $("#packImage").addEventListener('change', ()=>{
   const rd = new FileReader(); rd.onload = ()=> packImageDataURL = rd.result; rd.readAsDataURL(f);
 });
 
-async function generate(){
-  $("#gen-status").textContent = "Генерация…"; $("#gen-status").className = "";
-  const catSel=$("#category"); const cat = catSel.value==="Свой вариант" ? ($("#categoryCustom").value||"мясной продукт") : catSel.value;
-  const name = $("#name").value || null;
-  const pain = $("#pain").value || null;
-  const uvp = $("#uvp").value || null;
+function setStatus(text, variant){
+  statusEl.textContent = text || '';
+  statusEl.classList.remove('ok','err');
+  if(!text) return;
+  if(variant==='ok') statusEl.classList.add('ok');
+  if(variant==='err') statusEl.classList.add('err');
+}
+function setError(text){
+  errorEl.textContent = text || '';
+}
+function collectPayloadFromForm(){
+  const catSel = $("#category");
+  let category = catSel.value;
+  if(category === "Свой вариант"){
+    const custom = $("#categoryCustom").value.trim();
+    category = custom;
+  }
+  category = (category || '').trim();
+  if(!category){
+    throw new Error("Укажи категорию продукта");
+  }
+  const name = $("#name").value.trim();
+  const painText = $("#pain").value.trim();
+  const uvpText = $("#uvp").value.trim();
   const ages = [...document.querySelectorAll("#ages input:checked")].map(i=>i.value);
   const genders = [...document.querySelectorAll("#genders input:checked")].map(i=>i.value);
-
-  const r = await fetch('/api/generate', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ category:cat, productName:name, audience:{ages,genders}, pain, uniqueness:uvp })
-  });
-  if(!r.ok){ $("#gen-status").textContent="Ошибка"; $("#gen-status").className='err'; $("#gen-out").textContent="Не удалось получить ответы."; return; }
-  const data = await r.json();
-  PASSPORT = data;
-  $("#gen-out").textContent = data.previewText || JSON.stringify(data, null, 2);
-  $("#gen-status").textContent="Готово"; $("#gen-status").className='ok';
-  $("#docx").disabled = false;
+  return {
+    category,
+    name: name || null,
+    audience: [...ages, ...genders],
+    pains: painText ? [painText] : [],
+    uniqueness: uvpText || null,
+    imageDataUrl: packImageDataURL || null
+  };
+}
+function renderDraft(draft){
+  if(!draft){
+    previewEl.textContent = "Черновик пуст.";
+    return;
+  }
+  if(typeof draft === 'string'){
+    previewEl.textContent = draft;
+    return;
+  }
+  try{
+    previewEl.textContent = JSON.stringify(draft, null, 2);
+  }catch{
+    previewEl.textContent = String(draft);
+  }
+}
+async function generate(){
+  setError('');
+  setStatus('Генерируем…');
+  genBtn.disabled = true;
+  docxBtn.disabled = true;
+  let payload;
+  try{
+    payload = collectPayloadFromForm();
+  }catch(err){
+    setError(err.message);
+    setStatus('');
+    genBtn.disabled = false;
+    return;
+  }
+  try{
+    const res = await fetch('/api/generate', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(()=> ({}));
+    if(!res.ok){
+      throw new Error(data?.error || (`HTTP ${res.status}`));
+    }
+    PASSPORT = { draft: data.draft, mode: data.mode, payload };
+    renderDraft(data.draft);
+    setStatus(data.mode === 'llm' ? 'Готово (LLM)' : 'Готово (локально)', 'ok');
+    docxBtn.disabled = false;
+  }catch(err){
+    setError(err.message || 'Сбой генерации');
+    setStatus('', 'err');
+    docxBtn.disabled = true;
+  }finally{
+    genBtn.disabled = false;
+  }
 }
 async function downloadDocx(){
   if(!PASSPORT){ alert("Сначала сгенерируй паспорт."); return; }
-  $("#gen-status").textContent="Сборка DOCX…"; $("#gen-status").className='';
-  const r = await fetch('/api/generate-docx', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ answers:PASSPORT, packImageDataURL })
-  });
-  if(!r.ok){ $("#gen-status").textContent="Ошибка"; $("#gen-status").className='err'; alert("DOCX не собран"); return; }
-  const blob = await r.blob(); const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=(PASSPORT?.base?.name || 'passport') + '.docx'; a.click(); URL.revokeObjectURL(url);
-  $("#gen-status").textContent="DOCX готов"; $("#gen-status").className='ok';
+  setError('');
+  setStatus('Сборка DOCX…');
+  try{
+    const res = await fetch('/api/generate-docx', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ answers: PASSPORT.draft || PASSPORT, packImageDataURL })
+    });
+    if(!res.ok){
+      const detail = await res.text().catch(()=> '');
+      throw new Error(detail || 'DOCX не собран');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='passport.docx'; a.click(); URL.revokeObjectURL(url);
+    setStatus('DOCX готов','ok');
+  }catch(err){
+    setError(err.message || 'Не удалось собрать DOCX.');
+    setStatus('Не удалось собрать DOCX','err');
+  }
 }
-$("#gen").onclick = generate;
-$("#docx").onclick = downloadDocx;
+genBtn.onclick = generate;
+docxBtn.onclick = downloadDocx;
 loadBase();
 </script>
 </body>
