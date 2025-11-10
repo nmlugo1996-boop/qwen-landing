@@ -1,0 +1,57 @@
+.ps-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+
+.ps-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  user-select: none;
+}
+
+@media (min-width: 640px) {
+  .ps-logo {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+.ps-headings {
+  text-align: center;
+}
+
+.ps-title {
+  font-size: clamp(24px, 4vw, 40px);
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.ps-subtitle {
+  margin: 6px 0 0;
+  font-size: clamp(14px, 1.8vw, 18px);
+  color: #6b5f52;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #ff9b42, #ffce6d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.card-like {
+  border-radius: 16px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+}
+
+.inner-card {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+

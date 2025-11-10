@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Генератор звёздного продукта</title>
+<meta name="description" content="Создай свой продукт-звезду за 2 минуты. Когнитивно-сенсорный мини-бриф по методике «Полярная звезда».">
+<title>Генератор мясных продуктов — Звёзд</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 <style>
   :root{--bg:#fdf9f4;--panel:#fffaf4;--text:#3a2e1f;--muted:#6b5f52;--brand:#ff9b42;--brand2:#ffce6d;--radius:20px;--shadow:0 20px 40px rgba(255,155,66,.18);--max:1080px}
   body{margin:0;background:linear-gradient(180deg,#ffffff,#fff5e9);color:var(--text);font:16px/1.6 "Inter",system-ui,sans-serif}
@@ -36,10 +38,15 @@
 </head>
 <body>
 <div class="container">
-  <h1>Генератор мясных продуктов — Звёзд</h1>
-  <p class="tagline">Создай свой продукт-звезду за 2 минуты ✦</p>
+  <header class="ps-header">
+    <img src="polar-star.png" alt="Логотип Polar Star" class="ps-logo" width="56" height="56" />
+    <div class="ps-headings">
+      <h1 class="ps-title gradient-text">Генератор мясных продуктов — Звёзд</h1>
+      <p class="ps-subtitle">Создай свой продукт-звезду за 2 минуты ✦</p>
+    </div>
+  </header>
 
-  <div class="card">
+  <div class="card card-like">
     <div class="row">
       <label><b>Категория</b>
         <select id="category"></select>
@@ -50,7 +57,7 @@
       </label>
     </div>
 
-    <div class="card">
+    <div class="card card-like inner-card">
       <b>Целевая аудитория</b>
       <div class="row">
         <div>
@@ -85,7 +92,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card card-like">
     <b>Предпросмотр</b>
     <div id="gen-out">Здесь появится черновик паспорта.</div>
   </div>
