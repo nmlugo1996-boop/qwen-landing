@@ -1,0 +1,13 @@
+{
+  "name": "qwen-landing",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "build": "echo \"no build step\"",
+    "check": "node -e \"console.log('ok')\""
+  },
+  "dependencies": {
+    "docx": "^8.0.0"
+  }
+}

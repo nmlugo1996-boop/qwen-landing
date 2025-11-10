@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Генератор звёздного продукта</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#fdf9f4;--panel:#fffaf4;--text:#3a2e1f;--muted:#6b5f52;--brand:#ff9b42;--brand2:#ffce6d;--radius:20px;--shadow:0 20px 40px rgba(255,155,66,.18);--max:1080px}
+  body{margin:0;background:linear-gradient(180deg,#ffffff,#fff5e9);color:var(--text);font:16px/1.6 "Inter",system-ui,sans-serif}
+  .container{max-width:var(--max);margin:0 auto;padding:48px 24px;text-align:center;animation:fadeUp .6s ease forwards}
+  h1{margin:.2em 0;font-size:clamp(36px,4.5vw,56px);font-weight:600;background:linear-gradient(120deg,#ff9b42,#ffce6d);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .tagline{font-size:1.2rem;color:#6b5f52;margin-bottom:34px;opacity:0;animation:fadeIn .8s ease .2s forwards}
+  .muted{color:var(--muted)}
+  .card{background:var(--panel);border:1px solid rgba(255,155,66,.14);border-radius:var(--radius);box-shadow:var(--shadow);padding:34px;margin:30px auto;max-width:940px;text-align:left;opacity:0;transform:translateY(30px);animation:fadeUp .7s ease .15s forwards}
+  label{display:block;margin:18px 0;color:var(--text);font-weight:500}
+  input[type=text],textarea,select{width:100%;background:#fff;border:1px solid rgba(58,46,31,.12);border-radius:16px;padding:16px 18px;transition:.2s ease;box-shadow:0 10px 24px rgba(0,0,0,.06)}
+  input[type=text]:focus,textarea:focus,select:focus{border-color:#ffb46e;box-shadow:0 0 0 4px rgba(255,155,66,.2);outline:none}
+  textarea{min-height:120px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+  .chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+  .chip{background:#fff;border:1px solid rgba(58,46,31,.1);border-radius:999px;padding:10px 16px;font-size:13px;cursor:pointer;transition:.2s}
+  .chip:hover{background:rgba(255,155,66,.1);border-color:rgba(255,155,66,.45)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 22px;border-radius:16px;font-weight:600;cursor:pointer;border:none;transition:transform .2s ease, box-shadow .2s ease, background .2s ease,color .2s ease}
+  .btn-primary{background:linear-gradient(140deg,#ff9b42,#ffce6d);color:#513721;box-shadow:0 14px 28px rgba(255,155,66,.28)}
+  .btn-primary:hover{transform:scale(1.05);box-shadow:0 18px 34px rgba(255,155,66,.32)}
+  .btn-ghost{background:#fff;border:1px solid rgba(58,46,31,.22);color:#5f4a32}
+  .btn-ghost:hover{background:#fdf0e1}
+  #gen-status{font-size:12px;color:var(--muted);margin-left:12px}
+  #gen-status.ok{color:#16a34a} #gen-status.err{color:#dc2626}
+  #gen-out{background:#fff;border:1px solid rgba(58,46,31,.12);border-radius:20px;padding:20px;min-height:170px;white-space:pre-wrap;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  @media(max-width:720px){.row{grid-template-columns:1fr}.btn{width:100%}.card{padding:28px}}
+  @keyframes fadeIn{to{opacity:1}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Генератор мясных продуктов — Звёзд</h1>
+  <p class="tagline">Создай свой продукт-звезду за 2 минуты ✦</p>
+
+  <div class="card">
+    <div class="row">
+      <label><b>Категория</b>
+        <select id="category"></select>
+        <input id="categoryCustom" type="text" placeholder="Свой вариант" style="margin-top:8px;display:none"/>
+      </label>
+      <label><b>Название</b> <span class="muted">(оставь пустым — Qwen придумает)</span>
+        <input id="name" type="text" placeholder="Напр.: «Колбасёнок», «МОС-КУС»…"/>
+      </label>
+    </div>
+
+    <div class="card">
+      <b>Целевая аудитория</b>
+      <div class="row">
+        <div>
+          <div class="muted">Возраст</div>
+          <div id="ages"></div>
+        </div>
+        <div>
+          <div class="muted">Пол/группа</div>
+          <div id="genders"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <label><b>Потребительская боль</b> <span class="muted">(введи свою или выбери подсказку ниже)</span>
+        <textarea id="pain"></textarea>
+        <div id="painHints" class="chips"></div>
+      </label>
+      <label><b>Уникальность / УТП</b> <span class="muted">(оставь пустым — Qwen предложит)</span>
+        <textarea id="uvp"></textarea>
+      </label>
+    </div>
+
+    <label><b>Изображение упаковки</b> (PNG/JPG, до ~3 МБ)
+      <input id="packImage" type="file" accept="image/*"/>
+    </label>
+
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button id="gen" class="btn btn-primary">Сгенерировать паспорт</button>
+      <button id="docx" class="btn btn-ghost" disabled>Скачать DOCX</button>
+      <span id="gen-status">Готово</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <b>Предпросмотр</b>
+    <div id="gen-out">Здесь появится черновик паспорта.</div>
+  </div>
+</div>
+
+<script>
+const $ = s=>document.querySelector(s);
+let BASE = null, packImageDataURL = null, PASSPORT = null;
+
+async function loadBase(){
+  const r = await fetch('/base.json'); BASE = await r.json();
+  const catSel = $("#category");
+  BASE.meatCategories.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o); });
+  catSel.addEventListener('change', ()=>{
+    $("#categoryCustom").style.display = (catSel.value==="Свой вариант") ? "block":"none";
+    renderPainHints();
+  });
+  renderAudience();
+  renderPainHints();
+}
+function renderAudience(){
+  const ages = $("#ages"), gens = $("#genders");
+  ages.innerHTML = ''; gens.innerHTML = '';
+  BASE.ageBuckets.forEach(v=>{
+    const w=document.createElement('label');
+    w.innerHTML = `<input type="checkbox" value="${v}"> ${v}`; ages.appendChild(w);
+  });
+  BASE.genders.forEach(v=>{
+    const w=document.createElement('label');
+    w.style.display='block'; w.innerHTML = `<input type="checkbox" value="${v}"> ${v}`; gens.appendChild(w);
+  });
+}
+function renderPainHints(){
+  const sel = $("#category").value, hints = BASE.painsByCategory[sel] || BASE.painsByCategory.default;
+  const box = $("#painHints"); box.innerHTML = '';
+  hints.forEach(p=>{ const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=p; b.onclick=()=>$("#pain").value=p; box.appendChild(b); });
+}
+$("#packImage").addEventListener('change', ()=>{
+  const f = $("#packImage").files?.[0]; if(!f){packImageDataURL=null; return;}
+  const rd = new FileReader(); rd.onload = ()=> packImageDataURL = rd.result; rd.readAsDataURL(f);
+});
+
+async function generate(){
+  $("#gen-status").textContent = "Генерация…"; $("#gen-status").className = "";
+  const catSel=$("#category"); const cat = catSel.value==="Свой вариант" ? ($("#categoryCustom").value||"мясной продукт") : catSel.value;
+  const name = $("#name").value || null;
+  const pain = $("#pain").value || null;
+  const uvp = $("#uvp").value || null;
+  const ages = [...document.querySelectorAll("#ages input:checked")].map(i=>i.value);
+  const genders = [...document.querySelectorAll("#genders input:checked")].map(i=>i.value);
+
+  const r = await fetch('/api/generate', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ category:cat, productName:name, audience:{ages,genders}, pain, uniqueness:uvp })
+  });
+  if(!r.ok){ $("#gen-status").textContent="Ошибка"; $("#gen-status").className='err'; $("#gen-out").textContent="Не удалось получить ответы."; return; }
+  const data = await r.json();
+  PASSPORT = data;
+  $("#gen-out").textContent = data.previewText || JSON.stringify(data, null, 2);
+  $("#gen-status").textContent="Готово"; $("#gen-status").className='ok';
+  $("#docx").disabled = false;
+}
+async function downloadDocx(){
+  if(!PASSPORT){ alert("Сначала сгенерируй паспорт."); return; }
+  $("#gen-status").textContent="Сборка DOCX…"; $("#gen-status").className='';
+  const r = await fetch('/api/generate-docx', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ answers:PASSPORT, packImageDataURL })
+  });
+  if(!r.ok){ $("#gen-status").textContent="Ошибка"; $("#gen-status").className='err'; alert("DOCX не собран"); return; }
+  const blob = await r.blob(); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=(PASSPORT?.base?.name || 'passport') + '.docx'; a.click(); URL.revokeObjectURL(url);
+  $("#gen-status").textContent="DOCX готов"; $("#gen-status").className='ok';
+}
+$("#gen").onclick = generate;
+$("#docx").onclick = downloadDocx;
+loadBase();
+</script>
+</body>
+</html>
+
+
