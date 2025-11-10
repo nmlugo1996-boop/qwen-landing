@@ -1,213 +1,297 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Генератор мясных продуктов — Звёзд</title>
-  <meta name="description" content="Создай свой продукт-звезду за 2 минуты. Мини-бриф по методике «Полярная звезда»." />
-  <link rel="stylesheet" href="/styles.css" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="description" content="Создай свой продукт-звезду за 2 минуты. Когнитивно-сенсорный мини-бриф по методике «Полярная звезда».">
+<title>Генератор мясных продуктов — Звёзд</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="container">
-    <header class="ps-header">
-      <img src="/polar-star.png" alt="Логотип Polar Star" class="ps-logo" width="56" height="56" />
-      <div class="ps-headings">
-        <h1 class="ps-title gradient-text">Генератор мясных продуктов — Звёзд</h1>
-        <p class="ps-subtitle">Создай свой продукт-звезду за 2 минуты ✦</p>
-      </div>
-    </header>
+<main>
+  <header class="ps-header">
+    <img src="polar-star.png" alt="Логотип Polar Star" class="ps-logo" width="56" height="56">
+    <div class="ps-headings">
+      <h1 class="ps-title">Генератор мясных продуктов — Звёзд</h1>
+      <p class="ps-subtitle">Создай свой продукт-звезду за 2 минуты ✦</p>
+    </div>
+  </header>
 
-    <section class="card">
-      <div class="grid two">
+  <section class="card">
+    <div class="row">
+      <label class="field">
+        <span class="field-label"><i data-lucide="layers"></i>Категория</span>
+        <select id="category"></select>
+        <input id="categoryCustom" type="text" placeholder="Свой вариант" style="margin-top:8px;display:none">
+      </label>
+      <label class="field">
+        <span class="field-label"><i data-lucide="type"></i>Название</span>
+        <span class="field-helper">Оставь пустым — Qwen предложит идеи</span>
+        <input id="name" type="text" placeholder="Напр.: «Колбасёнок», «МОС-КУС»…">
+      </label>
+    </div>
+
+    <div class="card inner-card">
+      <h2 class="section-title"><i data-lucide="users"></i>Целевая аудитория</h2>
+      <div class="row">
         <div class="field">
-          <label for="category"><strong>Категория</strong></label>
-          <select id="category">
-            <option>Колбаса варёная</option>
-            <option>Сосиски</option>
-            <option>Ветчина</option>
-            <option>Фарш</option>
-          </select>
+          <span class="field-label">Возраст</span>
+          <div id="ages"></div>
         </div>
-
         <div class="field">
-          <label for="name"><strong>Название</strong> <span class="muted">(оставь пустым — Qwen придумает)</span></label>
-          <input id="name" placeholder="Напр.: «Колбасёнок», «МОС-КУС»…" />
-        </div>
-      </div>
-
-      <div class="grid two">
-        <div class="field">
-          <label><strong>Целевая аудитория</strong> — возраст</label>
-          <div class="checkcol">
-            <label><input type="checkbox" value="0–2" class="aud" /> 0–2</label>
-            <label><input type="checkbox" value="3–6" class="aud" /> 3–6</label>
-            <label><input type="checkbox" value="7–12" class="aud" /> 7–12</label>
-            <label><input type="checkbox" value="13–17" class="aud" /> 13–17</label>
-            <label><input type="checkbox" value="18–24" class="aud" /> 18–24</label>
-            <label><input type="checkbox" value="25–34" class="aud" /> 25–34</label>
-            <label><input type="checkbox" value="35–44" class="aud" /> 35–44</label>
-            <label><input type="checkbox" value="45–54" class="aud" /> 45–54</label>
-            <label><input type="checkbox" value="55+" class="aud" /> 55+</label>
-          </div>
-        </div>
-
-        <div class="field">
-          <label><strong>Пол/группа</strong></label>
-          <div class="checkcol">
-            <label><input type="checkbox" value="Женщины" class="aud" /> Женщины</label>
-            <label><input type="checkbox" value="Мужчины" class="aud" /> Мужчины</label>
-            <label><input type="checkbox" value="Родители" class="aud" /> Родители</label>
-            <label><input type="checkbox" value="Семьи" class="aud" /> Семьи</label>
-            <label><input type="checkbox" value="Дети" class="aud" /> Дети</label>
-          </div>
+          <span class="field-label">Пол / группа</span>
+          <div id="genders"></div>
         </div>
       </div>
+    </div>
 
-      <div class="grid two">
-        <div class="field">
-          <label for="pains"><strong>Потребительская боль</strong> <span class="muted"> (можно выбрать ниже)</span></label>
-          <textarea id="pains" rows="3"></textarea>
-          <div class="chips" id="pain-chips">
-            <button type="button" data-pain="Недоверие к составу/качеству">Недоверие к составу/качеству</button>
-            <button type="button" data-pain="Скучный вкус — нет эмоции">Скучный вкус — нет эмоции</button>
-            <button type="button" data-pain="Нет понятного УТП">Нет понятного УТП</button>
-            <button type="button" data-pain="Неудобная упаковка/открытие">Неудобная упаковка/открытие</button>
-            <button type="button" data-pain="Не брать с собой">Не брать с собой</button>
-            <button type="button" data-pain="Нет истории бренда">Нет истории бренда</button>
-            <button type="button" data-pain="Сложно выбрать на полке">Сложно выбрать на полке</button>
-            <button type="button" data-pain="Страх за здоровье/вину">Страх за здоровье/вину</button>
-            <button type="button" data-pain="Нет семейного сценария">Нет семейного сценария</button>
-            <button type="button" data-pain="Нет ритуала потребления">Нет ритуала потребления</button>
-          </div>
-        </div>
+    <div class="row">
+      <label class="field">
+        <span class="field-label"><i data-lucide="alert-circle"></i>Потребительская боль</span>
+        <span class="field-helper">Введи свою или выбери подсказку ниже</span>
+        <textarea id="pain"></textarea>
+        <div id="painHints" class="chips"></div>
+      </label>
+      <label class="field">
+        <span class="field-label"><i data-lucide="star"></i>Уникальность / УТП</span>
+        <span class="field-helper">Qwen допишет, если оставить пустым</span>
+        <textarea id="uvp"></textarea>
+      </label>
+    </div>
 
-        <div class="field">
-          <label for="uvp"><strong>Уникальность / УТП</strong> <span class="muted">(оставь пустым — Qwen предложит)</span></label>
-          <textarea id="uvp" rows="3"></textarea>
-        </div>
-      </div>
+    <label class="field" style="margin-top:12px">
+      <span class="field-label"><i data-lucide="image"></i>Изображение упаковки</span>
+      <span class="field-helper">PNG/JPG, до ~3 МБ</span>
+      <input id="packImage" type="file" accept="image/*">
+    </label>
 
-      <div class="field">
-        <label><strong>Изображение упаковки</strong> <span class="muted"> (PNG/JPG, до ~3 МБ)</span></label>
-        <input id="packfile" type="file" accept="image/png,image/jpeg" />
-      </div>
+    <div class="actions">
+      <button id="gen" class="btn">
+        <i data-lucide="sparkles"></i>
+        Сгенерировать паспорт
+      </button>
+      <button id="docx" class="btn" disabled>
+        <i data-lucide="download"></i>
+        Скачать DOCX
+      </button>
+      <span id="gen-status">Готово</span>
+      <span id="gen-error" class="error-text"></span>
+    </div>
+  </section>
 
-      <div class="actions">
-        <button id="btnGen" class="primary">Сгенерировать паспорт</button>
-        <button id="btnDocx" class="ghost">Скачать DOCX</button>
-        <span id="status" class="status"></span>
-        <span id="error" class="error"></span>
-      </div>
-    </section>
+  <section class="card">
+    <h2 class="section-title"><i data-lucide="file-text"></i>Предпросмотр</h2>
+    <div id="gen-out">Здесь появится черновик паспорта.</div>
+  </section>
+</main>
 
-    <section class="card">
-      <h2>Предпросмотр</h2>
-      <pre id="preview" class="preview">Здесь появится черновик паспорта.</pre>
-    </section>
-  </main>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+const $ = (sel) => document.querySelector(sel);
+let BASE = null;
+let packImageDataURL = null;
+let PASSPORT = null;
 
-  <script>
-    const el = s => document.querySelector(s);
-    const all = s => Array.from(document.querySelectorAll(s));
+const statusEl = $("#gen-status");
+const errorEl = $("#gen-error");
+const previewEl = $("#gen-out");
+const genBtn = $("#gen");
+const docxBtn = $("#docx");
 
-    el('#pain-chips').addEventListener('click', e => {
-      if (e.target.tagName !== 'BUTTON') return;
-      const t = el('#pains');
-      const v = e.target.dataset.pain;
-      const arr = (t.value ? t.value.split(',').map(x=>x.trim()).filter(Boolean) : []);
-      if (!arr.includes(v)) arr.push(v);
-      t.value = arr.join(', ');
+async function loadBase() {
+  const res = await fetch("/base.json");
+  BASE = await res.json();
+  const select = $("#category");
+  BASE.meatCategories.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item;
+    option.textContent = item;
+    select.appendChild(option);
+  });
+  select.addEventListener("change", () => {
+    $("#categoryCustom").style.display = select.value === "Свой вариант" ? "block" : "none";
+    renderPainHints();
+  });
+  renderAudience();
+  renderPainHints();
+}
+
+function renderAudience() {
+  const agesEl = $("#ages");
+  const gendersEl = $("#genders");
+  agesEl.innerHTML = "";
+  gendersEl.innerHTML = "";
+  BASE.ageBuckets.forEach((age) => {
+    const wrap = document.createElement("label");
+    wrap.className = "chip";
+    wrap.innerHTML = `<input type="checkbox" value="${age}"> ${age}`;
+    agesEl.appendChild(wrap);
+  });
+  BASE.genders.forEach((g) => {
+    const wrap = document.createElement("label");
+    wrap.className = "chip";
+    wrap.style.display = "inline-flex";
+    wrap.innerHTML = `<input type="checkbox" value="${g}"> ${g}`;
+    gendersEl.appendChild(wrap);
+  });
+}
+
+function renderPainHints() {
+  const category = $("#category").value;
+  const hints = BASE.painsByCategory[category] || BASE.painsByCategory.default;
+  const box = $("#painHints");
+  box.innerHTML = "";
+  hints.forEach((hint) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "chip";
+    btn.textContent = hint;
+    btn.addEventListener("click", () => {
+      $("#pain").value = hint;
     });
+    box.appendChild(btn);
+  });
+}
 
-    function fileToDataURL(file) {
-      return new Promise((resolve, reject) => {
-        const fr = new FileReader();
-        fr.onload = () => resolve(fr.result);
-        fr.onerror = reject;
-        fr.readAsDataURL(file);
-      });
+$("#packImage").addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+  if (!file) {
+    packImageDataURL = null;
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    packImageDataURL = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function setStatus(message, variant) {
+  statusEl.textContent = message || "";
+  statusEl.classList.remove("ok", "err");
+  if (!message) return;
+  if (variant === "ok") statusEl.classList.add("ok");
+  if (variant === "err") statusEl.classList.add("err");
+}
+
+function setError(message) {
+  errorEl.textContent = message || "";
+}
+
+function collectPayload() {
+  const select = $("#category");
+  let category = select.value;
+  if (category === "Свой вариант") {
+    category = $("#categoryCustom").value.trim();
+  }
+  category = (category || "").trim();
+  if (!category) {
+    throw new Error("Укажи категорию продукта");
+  }
+  const name = $("#name").value.trim();
+  const pain = $("#pain").value.trim();
+  const uvp = $("#uvp").value.trim();
+  const ages = [...document.querySelectorAll("#ages input:checked")].map((el) => el.value);
+  const genders = [...document.querySelectorAll("#genders input:checked")].map((el) => el.value);
+  return {
+    category,
+    name: name || null,
+    audience: [...ages, ...genders],
+    pains: pain ? [pain] : [],
+    uniqueness: uvp || null,
+    imageDataUrl: packImageDataURL || null
+  };
+}
+
+function renderDraft(draft) {
+  if (!draft) {
+    previewEl.textContent = "Черновик пуст.";
+    return;
+  }
+  if (typeof draft === "string") {
+    previewEl.textContent = draft;
+    return;
+  }
+  previewEl.textContent = JSON.stringify(draft, null, 2);
+}
+
+async function onGenerate() {
+  setError("");
+  setStatus("Генерируем…");
+  genBtn.disabled = true;
+  docxBtn.disabled = true;
+
+  let payload;
+  try {
+    payload = collectPayload();
+  } catch (err) {
+    setError(err.message);
+    setStatus("");
+    genBtn.disabled = false;
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data?.error || `HTTP ${res.status}`);
     }
+    PASSPORT = { draft: data.draft, mode: data.mode };
+    renderDraft(data.draft);
+    setStatus(data.mode === "llm" ? "Готово (LLM)" : "Готово (локально)", "ok");
+    docxBtn.disabled = false;
+  } catch (err) {
+    setError(err.message || "Сбой генерации");
+    setStatus("", "err");
+  } finally {
+    genBtn.disabled = false;
+  }
+}
 
-    async function collectPayload() {
-      const category = el('#category').value.trim();
-      const name = el('#name').value.trim();
-      const pains = el('#pains').value.split(',').map(s => s.trim()).filter(Boolean);
-      const uvp = el('#uvp').value.trim();
-      const audience = all('.aud:checked').map(i => i.value);
-      let imageDataUrl = null;
-      const f = el('#packfile').files?.[0];
-      if (f && f.size <= 3 * 1024 * 1024) {
-        imageDataUrl = await fileToDataURL(f);
-      }
-      return { category, name, audience, pains, uvp, imageDataUrl };
+async function onDownloadDocx() {
+  if (!PASSPORT || !PASSPORT.draft) {
+    alert("Сначала сгенерируй паспорт.");
+    return;
+  }
+  setError("");
+  setStatus("Сборка DOCX…");
+  try {
+    const res = await fetch("/api/generate-docx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers: PASSPORT.draft, packImageDataURL })
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(text || "DOCX не собран");
     }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const suggestedName = typeof PASSPORT.draft === "object" && PASSPORT.draft
+      ? (PASSPORT.draft.title || PASSPORT.draft.category || "passport")
+      : "passport";
+    a.href = url;
+    a.download = `${suggestedName}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus("DOCX готов", "ok");
+  } catch (err) {
+    setError(err.message || "Не удалось собрать DOCX.");
+    setStatus("Не удалось собрать DOCX", "err");
+  }
+}
 
-    async function onGenerate() {
-      el('#error').textContent = '';
-      el('#status').textContent = 'Генерируем…';
-      el('#btnGen').disabled = true;
-
-      try {
-        const payload = await collectPayload();
-        const res = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || ('HTTP ' + res.status));
-
-        const out = typeof data.draft === 'string' ? data.draft : JSON.stringify(data.draft, null, 2);
-        el('#preview').textContent = out;
-        el('#status').textContent = data.mode === 'llm' ? 'Готово (LLM)' : 'Готово (локально)';
-      } catch (e) {
-        el('#error').textContent = e.message || 'Сбой генерации';
-        el('#status').textContent = '';
-      } finally {
-        el('#btnGen').disabled = false;
-      }
-    }
-
-    async function onDocx() {
-      el('#error').textContent = '';
-      el('#status').textContent = 'Формируем DOCX…';
-      el('#btnDocx').disabled = true;
-
-      try {
-        let draft;
-        try {
-          draft = JSON.parse(el('#preview').textContent);
-        } catch {
-          throw new Error('Сначала нажми «Сгенерировать паспорт».');
-        }
-
-        const res = await fetch('/api/generate-docx', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draft })
-        });
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error('DOCX error: ' + txt.slice(0, 200));
-        }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'passport.docx';
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-        el('#status').textContent = 'DOCX готов';
-      } catch (e) {
-        el('#error').textContent = e.message || 'Не удалось собрать DOCX';
-        el('#status').textContent = '';
-      } finally {
-        el('#btnDocx').disabled = false;
-      }
-    }
-
-    el('#btnGen').addEventListener('click', e => { e.preventDefault(); onGenerate(); });
-    el('#btnDocx').addEventListener('click', e => { e.preventDefault(); onDocx(); });
-  </script>
+genBtn.addEventListener("click", onGenerate);
+docxBtn.addEventListener("click", onDownloadDocx);
+loadBase();
+lucide.createIcons();
+</script>
 </body>
 </html>
