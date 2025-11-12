@@ -16,10 +16,10 @@ export async function GET() {
   if (hasUrl && hasAnon) {
     try {
       const supabase = createClient(url!, anon!);
-      const { error } = await supabase.from("pg_tables").select("tablename").limit(1);
+      const { error } = await supabase.rpc("health_ping");
 
       if (error) {
-        console.error("[health-supabase] Supabase query error:", error);
+        console.error("[health-supabase] Supabase ping error:", error);
         errorMessage = error.message ?? "Unknown Supabase error";
       }
     } catch (error) {
