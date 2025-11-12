@@ -1,0 +1,123 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  @apply flex min-h-screen flex-col font-sans antialiased;
+  position: relative;
+  overflow-x: hidden;
+  background: radial-gradient(circle at 10% -10%, rgba(255, 250, 245, 0.7), transparent 60%),
+    radial-gradient(circle at 90% 0%, rgba(255, 232, 230, 0.5), transparent 65%), #f7f8fc;
+  color: #1f1f1f;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("/images/sausage-mountain.jpg");
+  background-size: cover;
+  background-position: center;
+  filter: blur(18px);
+  opacity: 0.2;
+  transform: scale(1.08);
+  z-index: -2;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(247, 248, 252, 0.92) 35%, #f7f8fc 100%);
+  z-index: -1;
+}
+
+a {
+  text-decoration: none;
+}
+
+main {
+  flex: 1;
+}
+
+.text-glow {
+  text-shadow: 0 0 6px #ff4d4f;
+}
+
+.card-surface {
+  @apply relative rounded-3xl border border-white/10 bg-white/90 p-6 shadow-card backdrop-blur-md transition-all duration-300;
+}
+
+.card-surface:hover {
+  @apply shadow-xl;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff4d4f] to-[#ff7875] px-6 py-3 font-semibold text-white shadow-lg shadow-[#ff4d4f]/30 transition-all duration-300;
+}
+
+.btn-primary:hover {
+  @apply shadow-glow;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-[#ff4d4f] px-6 py-3 font-semibold text-[#ff4d4f] transition-all duration-300;
+}
+
+.btn-secondary:hover {
+  @apply shadow-glow;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-white transition-all duration-300;
+}
+
+.btn-ghost:hover {
+  @apply border-white/30 bg-white/10 shadow-glow;
+}
+
+.hint-chip {
+  @apply rounded-full border border-neutral-200/80 bg-white/90 px-3 py-1 text-sm text-neutral-600 shadow-sm transition-all duration-300 hover:border-[#ff4d4f] hover:bg-[#ff4d4f]/10 hover:text-[#ff4d4f];
+}
+
+.pulse-lamp {
+  @apply flex h-10 w-10 items-center justify-center rounded-full bg-[#ffcc00]/20 text-2xl text-[#ffcc00] ring-2 ring-[#ffcc00]/40;
+  animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+.toast {
+  @apply pointer-events-none fixed left-1/2 bottom-6 z-50 min-w-[260px] max-w-[90vw] -translate-x-1/2 transform rounded-xl border border-white/10 bg-white/90 px-4 py-3 text-center text-sm font-medium text-neutral-700 shadow-lg opacity-0 transition-all duration-300;
+}
+
+.toast.show {
+  @apply pointer-events-auto translate-y-[-6px] opacity-100;
+}
+
+.floating-panel {
+  @apply card-surface animate-fadeSlide border-white/20 bg-white/95 shadow-card;
+}
+
+@media (max-width: 960px) {
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
