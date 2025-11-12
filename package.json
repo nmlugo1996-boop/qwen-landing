@@ -2,7 +2,16 @@
   "name": "qwen-landing",
   "version": "1.0.0",
   "private": true,
-  "type": "commonjs",
+  "description": "Генератор паспорта продукта (Полярная звезда) — статика + serverless API",
+  "license": "MIT",
   "engines": { "node": ">=18" },
-  "dependencies": { "docx": "^8.1.2" }
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo \"static build\"",
+    "start": "vercel dev --yes --confirm --force",
+    "gen:docx:local": "node -e \"console.log('use /api/generate-docx via HTTP')\""
+  },
+  "dependencies": {
+    "docx": "^8.3.1"
+  }
 }
