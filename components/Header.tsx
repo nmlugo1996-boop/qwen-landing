@@ -110,7 +110,7 @@ export default function Header() {
             <div className="min-w-0 space-y-1">
               <Link href="/">
                 <h1 className="text-[clamp(20px,2vw,32px)] font-extrabold leading-tight whitespace-normal break-words break-keep">
-                  ГЕНЕРАТОР УНИКАЛЬНЫХ МЯСНЫХ ПРОДУКТОВ
+                  ГЕНЕРАТОР УНИКАЛЬНЫХ ПРОДУКТОВ
                 </h1>
               </Link>
               <p className="text-[clamp(12px,1.2vw,18px)] leading-snug text-white/80">
@@ -120,7 +120,7 @@ export default function Header() {
           </div>
 
           <div className="hidden xl:block text-center">
-            <div className="mx-auto max-w-[360px] rounded-xl px-4 py-2 text-[clamp(14px,1.2vw,18px)] font-semibold whitespace-normal break-words drop-shadow-[0_0_24px_rgba(255,91,91,0.35)]">
+            <div className="mx-auto max-w-[360px] rounded-xl px-4 py-2 text-[clamp(14px,1.2vw,18px)] font-semibold whitespace-normal break-words text-[#FF5B5B] drop-shadow-[0_0_24px_rgba(255,91,91,0.35)]">
               СОЗДАЙ СВОЙ УНИКАЛЬНЫЙ ПРОДУКТ ЗА 2 МИНУТЫ
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function Header() {
           </div>
 
           <div className="lg:col-span-2 xl:hidden">
-            <div className="mt-1 text-center text-[clamp(14px,1.4vw,18px)] font-semibold opacity-90 whitespace-normal break-words">
+            <div className="mt-1 text-center text-[clamp(14px,1.4vw,18px)] font-semibold opacity-90 whitespace-normal break-words text-[#FF5B5B]">
               СОЗДАЙ СВОЙ УНИКАЛЬНЫЙ ПРОДУКТ ЗА 2 МИНУТЫ
             </div>
           </div>

@@ -5,22 +5,10 @@ import type { FormEvent } from "react";
 
 const CUSTOM_CATEGORY_OPTION = "Свой вариант…";
 
-const PRESET_CATEGORIES = [
-  "Колбаса варёная",
-  "Сосиски",
-  "Паштет",
-  "Ветчина",
-  "Копчёности",
-  "Бекон",
-  "Мясное пюре",
-  "Мясные снеки",
-  "Консервы мясные",
-  "Рагу мясное",
-  CUSTOM_CATEGORY_OPTION
-];
+const PRESET_CATEGORIES = []; // больше не используем пресеты — универсальный ввод
 
-const AGE_SEGMENTS = ["0–3", "3–6", "7–12", "13–17", "18–24", "25–34", "35–44", "45–54", "55+"];
-const GROUP_SEGMENTS = ["Женщины", "Мужчины"];
+const AGE_SEGMENTS = ["2–7", "8–18", "18–25", "26–45", "46–60", "60+", "80+"];
+const GROUP_SEGMENTS = ["Женщины", "Мужчины", "Неважно"];
 
 const painHints: Record<string, string[]> = {
   default: [
@@ -135,7 +123,7 @@ const showToast = (message: string, kind: "info" | "ok" | "warn" | "error" = "in
 };
 
 const createInitialForm = (): FormState => ({
-  category: PRESET_CATEGORIES[0],
+  category: "", // пусто по умолчанию — показываем только плейсхолдер
   categoryCustom: "",
   name: "",
   comment: "",
@@ -223,13 +211,13 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
   const [isFormReady, setIsFormReady] = useState(false);
   const customCategoryRef = useRef<HTMLInputElement | null>(null);
 
-  const showCustomCategoryInput = form.category === CUSTOM_CATEGORY_OPTION;
+  const showCustomCategoryInput = false; // кастомный ввод всегда, без селекта
 
   useEffect(() => {
     if (!initialDraft) return;
     const header: DraftHeader = initialDraft?.header ?? {};
-    const category = header?.category ?? PRESET_CATEGORIES[0];
-    const preparedCategory = PRESET_CATEGORIES.includes(category) ? category : CUSTOM_CATEGORY_OPTION;
+    const category = header?.category ?? "";
+    const preparedCategory = category;
     const audience = parseAudience(header.audience);
     const comment =
       typeof initialDraft?.comment === "string"
@@ -239,12 +227,12 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
           : "";
     const temperature =
       typeof initialDraft?.temperature === "number"
-        ? Math.min(0.7, Math.max(0, initialDraft.temperature))
+        ? Math.min(1, Math.max(0, initialDraft.temperature))
         : 0.7;
 
     setForm({
       category: preparedCategory,
-      categoryCustom: preparedCategory === CUSTOM_CATEGORY_OPTION ? category : "",
+      categoryCustom: "",
       name: header?.name ?? "",
       comment,
       temperature,
@@ -395,28 +383,18 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
         <label className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600" htmlFor="category">
           Категория
         </label>
-        <p className="text-xs text-neutral-500">Выберите из списка</p>
-        <select
+        <textarea
           id="category"
-          className="w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-base text-neutral-700 shadow-inner transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#ff4d4f]/30"
-          value={form.category}
-          onChange={(event) => handleCategoryChange(event.target.value)}
-        >
-          {PRESET_CATEGORIES.map((category) => (
-            <option key={category}>{category}</option>
-          ))}
-        </select>
-        {showCustomCategoryInput ? (
-          <input
-            ref={customCategoryRef}
-            id="categoryCustom"
-            className="w-full rounded-2xl border border-neutral-200 bg-white/90 px-4 py-3 text-base text-neutral-700 shadow-inner ring-2 ring-[#FF5B5B] transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#FF5B5B]"
-            placeholder="Укажи свою категорию"
-            value={form.categoryCustom}
-            onChange={(event) => updateField("categoryCustom", event.target.value)}
-            required
-          />
-        ) : null}
+          className="w-full rounded-2xl border border-neutral-200 bg-white/90 px-4 py-3 text-base text-neutral-700 shadow-inner transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#FF5B5B] placeholder:text-xs md:placeholder:text-sm placeholder:text-neutral-400 leading-tight min-h-[150px] resize-none"
+          rows={5}
+          placeholder='Введите категорию продукта: можно по официальной классификации, например «колбаса вареная», а можно в произвольной форме, например «фруктовое печенье», или  «батончик для спортивного питания», или  «готовый завтрак для детей», или «перекус в машину».'
+          value={effectiveCategory}
+          onChange={(event) => {
+            const value = event.target.value;
+            updateField("category", value);
+            updateField("categoryCustom", value);
+          }}
+        />
       </div>
 
       <div className="flex flex-col gap-2 md:gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
@@ -438,9 +416,9 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
         </label>
         <textarea
           id="comment"
-          className="w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-base text-neutral-700 shadow-inner transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#ff4d4f]/30"
-          rows={3}
-          placeholder="Введите любые пожелания, если есть."
+          className="w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-base text-neutral-700 shadow-inner transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#ff4d4f]/30 placeholder:text-xs md:placeholder:text-sm placeholder:text-neutral-400 leading-tight min-h-[140px] resize-none"
+          rows={5}
+          placeholder='Введите любые пожелание, если есть, например: "Хочу вкусный мясной  батончик, который можно есть после спортзала для роста мышц" или "Хочу женский изысканный десерт на основе молока, который может заменить обед и который будет помещаться в дамскую сумочку без боязни испачкать или испортиться"'
           value={form.comment}
           onChange={(event) => updateField("comment", event.target.value)}
         />
@@ -455,7 +433,7 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
           id="temperature"
           type="range"
           min="0"
-          max="0.7"
+          max="1"
           step="0.1"
           value={form.temperature}
           onChange={(event) => updateField("temperature", Number(event.target.value) as FormState["temperature"])}
@@ -469,11 +447,11 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
             <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600">Целевая аудитория</h3>
             <p className="text-xs text-neutral-500 mt-1">Возраст</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-2">
             {AGE_SEGMENTS.map((age) => (
               <label
                 key={age}
-                className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all duration-300 ${
+                className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm whitespace-nowrap transition-all duration-300 ${
                   form.audience.age.has(age)
                     ? "border-[#FF5B5B] bg-[#FFE6E6] text-[#FF5B5B] font-semibold"
                     : "border-neutral-200 bg-white/80 text-neutral-600 hover:border-[#ff4d4f]/60 hover:text-[#ff4d4f]"
@@ -495,11 +473,11 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
 
         <div id="audience-gender" className="flex flex-col gap-3 md:gap-4 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
           <p className="text-xs text-neutral-500">Пол</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2">
             {GROUP_SEGMENTS.map((group) => (
               <label
                 key={group}
-                className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all duration-300 ${
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm whitespace-nowrap transition-all duration-300 ${
                   form.audience.group.has(group)
                     ? "border-[#FF5B5B] bg-[#FFE6E6] text-[#FF5B5B] font-semibold"
                     : "border-neutral-200 bg-white/80 text-neutral-600 hover:border-[#ff4d4f]/60 hover:text-[#ff4d4f]"

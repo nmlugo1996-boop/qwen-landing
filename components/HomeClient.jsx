@@ -25,6 +25,14 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
   const [loading, setLoading] = useState(false);
   const [celebration, setCelebration] = useState(Boolean(initialDraft));
 
+  const scrollToPassport = () => {
+    if (typeof window === "undefined") return;
+    const el = document.getElementById("full-passport");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   // DOCX download removed: no route, no auto-download
 
   return (
@@ -38,6 +46,8 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
             onDraftGenerated={(newDraft) => {
               setDraft(newDraft);
               setCelebration(true);
+              // После генерации плавно прокручиваем к паспорту
+              setTimeout(scrollToPassport, 50);
             }}
             onLoadingChange={(state) => setLoading(state)}
             projectId={projectId}
