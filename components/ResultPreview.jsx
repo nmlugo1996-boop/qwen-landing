@@ -8,7 +8,7 @@ function formatAudience(audience) {
   return "—";
 }
 
-export default function ResultPreview({ draft, loading, celebration = false, onDownload }) {
+export default function ResultPreview({ draft, loading, celebration = false }) {
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [prevDraft, setPrevDraft] = useState(null);
   const header = draft?.header ?? {};
@@ -128,18 +128,18 @@ export default function ResultPreview({ draft, loading, celebration = false, onD
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h2 className="text-xl md:text-2xl font-semibold text-neutral-900">Полный паспорт</h2>
-          <button
-            id="download-docx"
-            className="btn-primary w-full sm:w-auto whitespace-nowrap px-4 md:px-5 py-2 text-xs md:text-sm font-semibold"
-            type="button"
-            onClick={onDownload}
-            disabled={!draft || loading}
-          >
-            Скачать DOCX
-          </button>
         </div>
 
         <div id="fp-content" className="mt-4 md:mt-6 flex flex-col gap-4 md:gap-6">
+          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
+            <h3 className="text-base md:text-lg font-semibold text-neutral-800">
+              Когнитивно-сенсорный маркетинговый паспорт
+            </h3>
+            <p className="mt-1 text-xs md:text-sm text-neutral-600">
+              Полный паспорт продукта по методике «Полярная звезда»
+            </p>
+          </div>
+
           {blockOrder.map((block) => {
             const rows = Array.isArray(blocks[block.key]) ? blocks[block.key] : [];
             if (!rows.length) return null;
@@ -170,6 +170,25 @@ export default function ResultPreview({ draft, loading, celebration = false, onD
             );
           })}
 
+          {/* Дополнительные секции (текстовые) — заглушки, если пусто */}
+          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
+            <h3 className="text-base md:text-lg font-semibold text-neutral-800">Технология и состав</h3>
+            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
+              {draft?.technology || "—"}
+            </p>
+          </div>
+          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
+            <h3 className="text-base md:text-lg font-semibold text-neutral-800">Почему это звезда?</h3>
+            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
+              {draft?.starReason || "—"}
+            </p>
+          </div>
+          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
+            <h3 className="text-base md:text-lg font-semibold text-neutral-800">Заключение</h3>
+            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
+              {draft?.conclusion || "—"}
+            </p>
+          </div>
         </div>
       </section>
     </aside>

@@ -25,65 +25,7 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
   const [loading, setLoading] = useState(false);
   const [celebration, setCelebration] = useState(Boolean(initialDraft));
 
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  const handleDownloadDocx = useCallback(async () => {
-    if (!draft) return;
-    setIsDownloading(true);
-    try {
-      const res = await fetch("/api/generate-docx", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ draft })
-      });
-
-      const contentType = res.headers.get("Content-Type") || "";
-      const contentLength = res.headers.get("Content-Length") || "";
-
-      console.log("DOCX_DOWNLOAD_HEADERS", {
-        status: res.status,
-        contentType,
-        contentLength
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text().catch(() => "");
-        throw new Error(errorText || "Не удалось собрать DOCX");
-      }
-
-      if (!contentType.includes("officedocument.wordprocessingml.document")) {
-        const text = await res.text().catch(() => "");
-        console.error("NOT_DOCX_RESPONSE", contentType, text?.slice(0, 200));
-        throw new Error("Сервер вернул не DOCX-файл");
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `Паспорт_${draft.header?.name || "продукт"}.docx`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      URL.revokeObjectURL(url);
-      showToast("DOCX скачан", "ok");
-    } catch (error) {
-      console.error(error);
-      showToast(error.message || "Ошибка при сборке DOCX", "error");
-    } finally {
-      setIsDownloading(false);
-    }
-  }, [draft]);
-
-
-  useEffect(() => {
-    if (autoDownloadDocx && initialDraft) {
-      handleDownloadDocx();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoDownloadDocx, initialDraft]);
+  // DOCX download removed: no route, no auto-download
 
   return (
     <>
@@ -105,7 +47,6 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
             draft={draft}
             loading={loading}
             celebration={celebration}
-            onDownload={handleDownloadDocx}
           />
         </div>
       </div>

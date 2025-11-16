@@ -409,41 +409,7 @@ const requestGenerate = async () => {
   }
 };
 
-const requestDocx = async () => {
-  if (!lastDraft) {
-    showToast('Сначала сгенерируй паспорт', 'warn');
-    return;
-  }
-
-  setLoading(true, 'Собираю DOCX…');
-  try {
-    const response = await fetch('/api/generate-docx', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ draft: lastDraft })
-    });
-
-    if (!response.ok) {
-      throw new Error(`DOCX ${response.status}`);
-    }
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${(lastDraft.title || lastDraft.category || 'Паспорт').replace(/[\\/:*?"<>|]+/g, '_')}.docx`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
-    showToast('DOCX скачан', 'ok');
-    setLoading(false, 'Готово');
-  } catch (error) {
-    console.error(error);
-    showToast(error.message || 'Ошибка при сборке DOCX', 'error');
-    setLoading(false, 'Ошибка');
-  }
-};
+// DOCX download disabled: backend removed and button should be gone
 
 const requestDiag = async () => {
   if (!diagStatus) return;
@@ -460,7 +426,7 @@ const requestDiag = async () => {
 };
 
 if (btnGen) btnGen.addEventListener('click', requestGenerate);
-if (btnDocx) btnDocx.addEventListener('click', requestDocx);
+// no DOCX handler
 if (diagBtn) diagBtn.addEventListener('click', requestDiag);
 if (temperature) temperature.addEventListener('input', updateTemperatureLabel);
 if (categorySelect) categorySelect.addEventListener('change', handleCategoryChange);
