@@ -12,7 +12,7 @@ function Logo() {
 
   if (fallbackText) {
     return (
-      <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-white text-lg font-black uppercase text-[#121212] lg:h-24 lg:w-24">
+      <div className="inline-flex h-[6.75rem] w-[6.75rem] items-center justify-center rounded-2xl bg-white text-lg font-black uppercase text-[#121212] lg:h-[8.1rem] lg:w-[8.1rem]">
         PS
       </div>
     );
@@ -22,8 +22,8 @@ function Logo() {
     <Image
       src={src}
       alt="Polar Star"
-      width={120}
-      height={120}
+      width={162}
+      height={162}
       priority
       onError={() => {
         if (src === "/Logo.svg") {
@@ -32,7 +32,7 @@ function Logo() {
           setFallbackText(true);
         }
       }}
-      className="h-20 w-20 select-none object-contain lg:h-24 lg:w-24"
+      className="h-[6.75rem] w-[6.75rem] select-none object-contain lg:h-[8.1rem] lg:w-[8.1rem]"
     />
   );
 }
