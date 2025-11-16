@@ -12,7 +12,7 @@ function Logo() {
 
   if (fallbackText) {
     return (
-      <div className="inline-flex h-[6.75rem] w-[6.75rem] items-center justify-center rounded-2xl bg-white text-lg font-black uppercase text-[#121212] lg:h-[8.1rem] lg:w-[8.1rem]">
+      <div className="inline-flex h-28 w-28 md:h-36 md:w-36 lg:h-40 lg:w-40 items-center justify-center rounded-2xl bg-white text-lg font-black uppercase text-[#121212]">
         PS
       </div>
     );
@@ -22,8 +22,8 @@ function Logo() {
     <Image
       src={src}
       alt="Polar Star"
-      width={162}
-      height={162}
+      width={200}
+      height={200}
       priority
       onError={() => {
         if (src === "/Logo.svg") {
@@ -32,7 +32,7 @@ function Logo() {
           setFallbackText(true);
         }
       }}
-      className="h-[6.75rem] w-[6.75rem] select-none object-contain lg:h-[8.1rem] lg:w-[8.1rem]"
+      className="h-28 w-28 md:h-36 md:w-36 lg:h-40 lg:w-40 select-none object-contain"
     />
   );
 }
@@ -104,7 +104,7 @@ export default function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="grid items-center gap-4 py-4 lg:py-5 lg:grid-cols-[1fr,auto] xl:grid-cols-[1fr,auto,auto]">
           <div className="flex min-w-0 items-start gap-4">
-            <Link href="/" className="shrink-0" aria-label="На главную">
+            <Link href="/" className="shrink-0 relative -mt-4 md:-mt-6 z-10" aria-label="На главную">
               <Logo />
             </Link>
             <div className="min-w-0 space-y-1">
