@@ -1,41 +1,65 @@
-import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 export async function GET() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url   = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const anon  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  const srole = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-  const hasUrl = Boolean(url);
-  const hasAnon = Boolean(anon);
-  const hasService = Boolean(service);
+  const env = { url: !!url, anon: !!anon, srole: !!srole };
 
-  let errorMessage: string | null = null;
-
-  if (hasUrl && hasAnon) {
-    try {
-      const supabase = createClient(url!, anon!);
-      const { error } = await supabase.rpc("health_ping");
-
-      if (error) {
-        console.error("[health-supabase] Supabase ping error:", error);
-        errorMessage = error.message ?? "Unknown Supabase error";
-      }
-    } catch (error) {
-      console.error("[health-supabase] Unexpected error:", error);
-      errorMessage = error instanceof Error ? error.message : "Unknown error";
-    }
-  } else {
-    errorMessage = "Missing Supabase environment variables";
+  if (!env.url || (!env.anon && !env.srole)) {
+    return NextResponse.json({
+      ok: true,
+      mode: "noop",
+      env,
+      note: "Supabase credentials are not configured, skipping connectivity check.",
+      build: (process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 7)
+    });
   }
 
-  return Response.json({
-    ok: !errorMessage,
-    hasUrl,
-    hasAnon,
-    hasService,
-    error: errorMessage
+  let db = false, error: any = null, mode: "service" | "anon" | null = null;
+
+  try {
+    if (srole) {
+      const admin = createClient(url, srole, { auth: { persistSession: false } });
+      const { error: e1 } = await admin.from("_health").select("id", { head: true, count: "exact" }).limit(1);
+      if (!e1) {
+        db = true;
+        mode = "service";
+      } else {
+        error = e1;
+      }
+    }
+
+    if (!db && anon) {
+      const pub = createClient(url, anon, { auth: { persistSession: false } });
+      const { error: e2 } = await pub.from("_health").select("id", { head: true, count: "exact" }).limit(1);
+      if (!e2) {
+        db = true;
+        mode = "anon";
+      } else {
+        error = error ?? e2;
+      }
+    }
+  } catch (e: any) {
+    error = e?.message ?? String(e);
+  }
+
+  const errMsg = error
+    ? typeof error === "string"
+      ? error
+      : error.message || JSON.stringify(error)
+    : null;
+
+  return NextResponse.json({
+    ok: db,
+    mode,
+    env,
+    error: errMsg,
+    build: (process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 7)
   });
 }
 

@@ -11,6 +11,7 @@ const INPUT_SCHEMA = z.object({
   audience: z.array(z.string()).default([]),
   pain: z.string().optional(),
   innovation: z.string().optional(),
+  comment: z.string().optional(),
   name: z.string().optional(),
   temperature: z.number().min(0).max(1).default(0.7),
   projectId: z.string().uuid().optional()
@@ -49,6 +50,7 @@ async function callLLM(payload, references) {
           audience: payload.audience,
           pain: payload.pain ?? null,
           innovation: payload.innovation ?? null,
+          comment: payload.comment ?? null,
           temperature: payload.temperature
         },
         null,

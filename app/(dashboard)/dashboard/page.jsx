@@ -2,9 +2,6 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createServerClient } from "../../../lib/supabaseClient";
 import { listProjects } from "../../../lib/db";
-import dynamic from "next/dynamic";
-
-const SendToTelegramButton = dynamic(() => import("../../../components/SendToTelegramButton"), { ssr: false });
 
 async function getData() {
   const cookieStore = cookies();
@@ -59,7 +56,6 @@ export default async function DashboardPage() {
                 <Link href={`/project/${project.id}`} className="btn secondary">
                   Открыть
                 </Link>
-                <SendToTelegramButton projectId={project.id} />
                 <Link href={`/project/${project.id}?download=docx`} className="btn ghost">
                   Скачать DOCX
                 </Link>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import GeneratorForm from "./GeneratorForm";
+import OnboardingTour from "./OnboardingTour";
 import ResultPreview from "./ResultPreview";
 
 const showToast = (message, kind = "info") => {
@@ -22,60 +23,60 @@ const showToast = (message, kind = "info") => {
 export default function HomeClient({ initialDraft = null, projectId = null, autoDownloadDocx = false }) {
   const [draft, setDraft] = useState(initialDraft);
   const [loading, setLoading] = useState(false);
+  const [celebration, setCelebration] = useState(Boolean(initialDraft));
+
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadDocx = useCallback(async () => {
     if (!draft) return;
+    setIsDownloading(true);
     try {
-      setLoading(true);
-      const response = await fetch("/api/generate-docx", {
+      const res = await fetch("/api/generate-docx", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ draft })
       });
-      if (!response.ok) {
-        throw new Error(`DOCX ${response.status}`);
+
+      const contentType = res.headers.get("Content-Type") || "";
+      const contentLength = res.headers.get("Content-Length") || "";
+
+      console.log("DOCX_DOWNLOAD_HEADERS", {
+        status: res.status,
+        contentType,
+        contentLength
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "");
+        throw new Error(errorText || "Не удалось собрать DOCX");
       }
-      const blob = await response.blob();
+
+      if (!contentType.includes("officedocument.wordprocessingml.document")) {
+        const text = await res.text().catch(() => "");
+        console.error("NOT_DOCX_RESPONSE", contentType, text?.slice(0, 200));
+        throw new Error("Сервер вернул не DOCX-файл");
+      }
+
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const filename =
-        (draft?.header?.name || draft?.header?.category || "Паспорт").replace(/[\\/:*?"<>|]+/g, "_") + ".docx";
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Паспорт_${draft.header?.name || "продукт"}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
       URL.revokeObjectURL(url);
       showToast("DOCX скачан", "ok");
     } catch (error) {
       console.error(error);
       showToast(error.message || "Ошибка при сборке DOCX", "error");
     } finally {
-      setLoading(false);
+      setIsDownloading(false);
     }
   }, [draft]);
 
-  const handleSendToTelegram = useCallback(async () => {
-    if (!draft) return;
-    try {
-      setLoading(true);
-      const response = await fetch("/api/send-to-tg", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ draft, projectId })
-      });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error?.error || `Telegram ${response.status}`);
-      }
-      showToast("Отправлено в Telegram", "ok");
-    } catch (error) {
-      console.error(error);
-      showToast(error.message || "Не удалось отправить в Telegram", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [draft, projectId]);
 
   useEffect(() => {
     if (autoDownloadDocx && initialDraft) {
@@ -85,20 +86,31 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
   }, [autoDownloadDocx, initialDraft]);
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-10">
-      <GeneratorForm
-        onDraftGenerated={(newDraft) => setDraft(newDraft)}
-        onLoadingChange={(state) => setLoading(state)}
-        projectId={projectId}
-        initialDraft={initialDraft}
-      />
-      <ResultPreview
-        draft={draft}
-        loading={loading}
-        onDownload={handleDownloadDocx}
-        onSendToTelegram={handleSendToTelegram}
-      />
-    </div>
+    <>
+      <div className="relative">
+        <div className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-[#FF5B5B]/10 blur-3xl pointer-events-none" />
+        <div className="absolute top-40 -right-20 h-80 w-80 rounded-full bg-[#FFE6E6]/20 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 h-72 w-72 rounded-full bg-[#FF5B5B]/5 blur-3xl pointer-events-none -translate-x-1/2" />
+        <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10 relative z-10">
+          <GeneratorForm
+            onDraftGenerated={(newDraft) => {
+              setDraft(newDraft);
+              setCelebration(true);
+            }}
+            onLoadingChange={(state) => setLoading(state)}
+            projectId={projectId}
+            initialDraft={initialDraft}
+          />
+          <ResultPreview
+            draft={draft}
+            loading={loading}
+            celebration={celebration}
+            onDownload={handleDownloadDocx}
+          />
+        </div>
+      </div>
+      <OnboardingTour />
+    </>
   );
 }
 

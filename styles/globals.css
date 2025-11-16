@@ -23,30 +23,8 @@ body {
   @apply flex min-h-screen flex-col font-sans antialiased;
   position: relative;
   overflow-x: hidden;
-  background: radial-gradient(circle at 10% -10%, rgba(255, 250, 245, 0.7), transparent 60%),
-    radial-gradient(circle at 90% 0%, rgba(255, 232, 230, 0.5), transparent 65%), #f7f8fc;
+  background: #fafafa;
   color: #1f1f1f;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image: url("/images/sausage-mountain.jpg");
-  background-size: cover;
-  background-position: center;
-  filter: blur(18px);
-  opacity: 0.2;
-  transform: scale(1.08);
-  z-index: -2;
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(247, 248, 252, 0.92) 35%, #f7f8fc 100%);
-  z-index: -1;
 }
 
 a {
@@ -99,7 +77,7 @@ main {
 
 .pulse-lamp {
   @apply flex h-10 w-10 items-center justify-center rounded-full bg-[#ffcc00]/20 text-2xl text-[#ffcc00] ring-2 ring-[#ffcc00]/40;
-  animation: pulseGlow 1.5s ease-in-out infinite;
+  animation: lampBlink 1.4s ease-in-out infinite;
 }
 
 .toast {
@@ -112,6 +90,172 @@ main {
 
 .floating-panel {
   @apply card-surface animate-fadeSlide border-white/20 bg-white/95 shadow-card;
+}
+
+.coachmark-highlight {
+  position: relative !important;
+  z-index: 60 !important;
+  box-shadow: 0 0 0 4px rgba(255, 77, 79, 0.35), 0 20px 45px rgba(15, 15, 15, 0.18) !important;
+  border-radius: 22px !important;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.coachmark-highlight::after {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  border-radius: 28px;
+  border: 2px dashed rgba(255, 77, 79, 0.4);
+  pointer-events: none;
+}
+
+@keyframes lampBlink {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1px);
+  }
+  50% {
+    transform: translateX(1px);
+  }
+  75% {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes progressFill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes iconCycle {
+  0%, 33.33% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  33.34%, 66.66% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  66.67%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes iconCycle1 {
+  0%, 33.33% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  33.34%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes iconCycle2 {
+  0%, 33.33% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  33.34%, 66.66% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  66.67%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes iconCycle3 {
+  0%, 66.66% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  66.67%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes passportAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.btn-generating {
+  animation: shake 0.4s ease-in-out infinite;
+  box-shadow: 0 0 24px rgba(255, 91, 91, 0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-generating::after {
+  content: "";
+  position: absolute;
+  bottom: 1px;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.8);
+  animation: progressFill 2.5s ease-out forwards;
+  z-index: 1;
+}
+
+.passport-appear {
+  animation: passportAppear 0.25s ease-out forwards;
+}
+
+.icon-cycle-1 {
+  animation: iconCycle1 1.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+.icon-cycle-2 {
+  animation: iconCycle2 1.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+.icon-cycle-3 {
+  animation: iconCycle3 1.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+.onboarding-overlay {
+  backdrop-filter: none !important;
+  filter: none !important;
+  background: none !important;
+}
+
+.passport-ready-label {
+  color: #fff !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
 }
 
 @media (max-width: 960px) {

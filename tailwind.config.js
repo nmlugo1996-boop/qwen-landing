@@ -13,17 +13,12 @@ module.exports = {
         sans: ["Manrope", "sans-serif"]
       },
       keyframes: {
-        pulseGlow: {
-          "0%, 100%": { opacity: "0.5", transform: "scale(1)" },
-          "50%": { opacity: "1", transform: "scale(1.08)" }
-        },
         fadeSlide: {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" }
         }
       },
       animation: {
-        pulseGlow: "pulseGlow 1.5s ease-in-out infinite",
         fadeSlide: "fadeSlide 0.6s ease forwards"
       },
       boxShadow: {
