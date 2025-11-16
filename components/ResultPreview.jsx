@@ -53,91 +53,49 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       ) : null}
 
       <section
-        id="brief-passport"
-        className={`floating-panel overflow-hidden border border-white/20 bg-white/95 rounded-xl md:rounded-3xl p-4 md:p-6 ${
-          showPlaceholder
-            ? "ring-1 ring-[#ffcc00]/30"
-            : shouldAnimate
-              ? "passport-appear shadow-[0_18px_40px_rgba(0,0,0,0.08)]"
-              : ""
-        }`}
-        aria-live="polite"
-        style={shouldAnimate && !showPlaceholder ? { opacity: 0 } : {}}
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <span className="text-xs uppercase tracking-[0.24em] text-[#ff4d4f]">Статус</span>
-            <h2 className="mt-2 md:mt-3 text-xl md:text-2xl font-semibold text-neutral-900">Краткий паспорт продукта</h2>
-          </div>
-          {showPlaceholder && (
-            <div className="pulse-lamp" aria-hidden="true">
-              💡
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4 md:mt-6 space-y-3 md:space-y-4">
-          <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">Категория</span>
-            <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
-              {getValue("category")}
-            </strong>
-          </div>
-          <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">Название</span>
-            <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">{getValue("name")}</strong>
-          </div>
-          <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">Целевая аудитория</span>
-            <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
-              {getValue("audience")}
-            </strong>
-          </div>
-          <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">Потребительская боль</span>
-            <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">{getValue("pain")}</strong>
-          </div>
-          <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">Уникальность</span>
-            <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
-              {getValue("innovation")}
-            </strong>
-          </div>
-        </div>
-
-        <p className="mt-4 md:mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 text-xs md:text-sm text-neutral-600 shadow-inner">
-          {showPlaceholder ? (
-            <>
-              <span className="font-semibold text-[#ff4d4f]">Ждём данные…</span>
-              <span>Здесь появится краткая версия КСМ-паспорта продукта</span>
-            </>
-          ) : (
-            <>
-              <span className="font-semibold text-[#23a26d]">Готово!</span>
-              <span>Можно перейти к подробностям и сохранить результат</span>
-            </>
-          )}
-        </p>
-      </section>
-
-      <section
         id="full-passport"
         className="floating-panel border border-white/20 bg-white/95 shadow-sm md:shadow-lg transition-opacity duration-500 rounded-xl md:rounded-3xl p-4 md:p-6"
         aria-live="polite"
         style={{ opacity: draft && !loading ? 1 : 0.6 }}
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <h2 className="text-xl md:text-2xl font-semibold text-neutral-900">Полный паспорт</h2>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-xl md:text-2xl font-semibold text-neutral-900">
+            Паспорт уникального продукта
+          </h2>
+          <p className="text-xs md:text-sm text-neutral-600">
+            Когнитивно-сенсорный маркетинговый паспорт по методике «Полярная звезда»
+          </p>
         </div>
 
         <div id="fp-content" className="mt-4 md:mt-6 flex flex-col gap-4 md:gap-6">
-          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
-            <h3 className="text-base md:text-lg font-semibold text-neutral-800">
-              Когнитивно-сенсорный маркетинговый паспорт
-            </h3>
-            <p className="mt-1 text-xs md:text-sm text-neutral-600">
-              Полный паспорт продукта по методике «Полярная звезда»
-            </p>
+          {/* Шапка продукта (бывший краткий паспорт) */}
+          <div className="space-y-3 md:space-y-4">
+            <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
+              <span className="text-xs uppercase tracking-wide text-neutral-500">Категория</span>
+              <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
+                {getValue("category")}
+              </strong>
+            </div>
+            <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
+              <span className="text-xs uppercase tracking-wide text-neutral-500">Название</span>
+              <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">{getValue("name")}</strong>
+            </div>
+            <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
+              <span className="text-xs uppercase tracking-wide text-neutral-500">Целевая аудитория</span>
+              <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
+                {getValue("audience")}
+              </strong>
+            </div>
+            <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
+              <span className="text-xs uppercase tracking-wide text-neutral-500">Потребительская боль</span>
+              <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">{getValue("pain")}</strong>
+            </div>
+            <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
+              <span className="text-xs uppercase tracking-wide text-neutral-500">Уникальность</span>
+              <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
+                {getValue("innovation")}
+              </strong>
+            </div>
           </div>
 
           {blockOrder.map((block) => {
