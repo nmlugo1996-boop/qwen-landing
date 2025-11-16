@@ -31,6 +31,10 @@ export type DraftBlocks = Record<string, DraftBlockRow[]>;
 export type DraftData = {
   header?: DraftHeader;
   blocks?: DraftBlocks;
+  // Дополнительные текстовые разделы полного паспорта
+  tech?: string[];        // «Технология и состав» — как список пунктов
+  star?: string[];        // «Почему это звезда?» — как список пунктов
+  conclusion?: string;    // «Заключение» — как один абзац
 };
 
 // --------- ХЕЛПЕРЫ БЕЗОПАСНОСТИ ---------
