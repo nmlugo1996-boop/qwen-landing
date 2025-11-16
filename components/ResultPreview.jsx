@@ -46,6 +46,18 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
 
   return (
     <aside className="flex flex-col gap-4 md:gap-6 lg:sticky lg:top-32">
+      <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-6 shadow-inner flex flex-col items-center justify-center text-center gap-4 mb-6">
+        <div className="w-full aspect-video bg-neutral-200/70 rounded-lg flex items-center justify-center text-neutral-500 text-sm md:text-base">
+          Здесь появится изображение упаковки продукта (в разработке)
+        </div>
+        <button
+          disabled
+          className="px-4 py-2 rounded-full bg-neutral-300 text-neutral-600 text-sm cursor-not-allowed"
+        >
+          Сгенерировать упаковку (скоро)
+        </button>
+      </div>
+
       {celebration ? (
         <div className="passport-ready-label rounded-xl md:rounded-3xl p-3 md:p-4 text-center text-xs md:text-sm shadow-sm md:shadow-lg">
           Поздравляем! Вы создали новый продукт!
