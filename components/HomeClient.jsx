@@ -32,6 +32,10 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+  const scrollToTop = () => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // DOCX download removed: no route, no auto-download
 
@@ -52,6 +56,7 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
             onLoadingChange={(state) => setLoading(state)}
             projectId={projectId}
             initialDraft={initialDraft}
+            onSubmitStart={scrollToTop}
           />
           <ResultPreview
             draft={draft}

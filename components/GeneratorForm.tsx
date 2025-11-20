@@ -1,72 +1,85 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 
 const CUSTOM_CATEGORY_OPTION = "Свой вариант…";
 
-const PRESET_CATEGORIES = []; // больше не используем пресеты — универсальный ввод
+type DiagnosticAnswer = "yes" | "no" | null;
+
+const DIAGNOSTIC_SECTIONS = [
+  {
+    title: "Когнитивный блок",
+    questions: [
+      { id: "c1", text: "Хочу уточнить/скорректировать формулировку потребительской боли, на которой строится продукт" },
+      { id: "c2", text: "Хочу увидеть описание нового рынка/сегмента/ниши и новой ценности, которую создаёт продукт" },
+      { id: "c3", text: "Хочу увидеть описание новых привычек потребления нового продукта" },
+      { id: "c4", text: "Хочу увидеть объяснительный нарратив для переобучения потребителей на новый продукт и привычки" },
+      { id: "c5", text: "Хочу увидеть описание механики обучения потребителей" }
+    ]
+  },
+  {
+    title: "Сенсорный блок",
+    questions: [
+      { id: "s1", text: "Хочу увидеть описание уникального визуального образа" },
+      { id: "s2", text: "Хочу увидеть описание уникального аудиального образа" },
+      { id: "s3", text: "Хочу увидеть описание уникального обонятельного образа" },
+      { id: "s4", text: "Хочу увидеть описание уникального осязательного образа" },
+      { id: "s5", text: "Хочу увидеть описание уникального вкусового образа" }
+    ]
+  },
+  {
+    title: "Брендинговый блок",
+    questions: [
+      { id: "b1", text: "Хочу увидеть описание, как потребитель улучшает свой «набор историй» за счёт бренда" },
+      { id: "b2", text: "Хочу увидеть описание контекста: какие внешние условия/тренды помогают, а какие мешают" },
+      { id: "b3", text: "Хочу увидеть сильное ядро бренда: название, логотип, слоган, идея key visual" },
+      { id: "b4", text: "Хочу увидеть описание уникального пути клиента и уникальных действий в важных точках пути" },
+      { id: "b5", text: "Хочу увидеть описание развития стратегии бренда на 3–5–10 лет" }
+    ]
+  },
+  {
+    title: "Маркетинговый блок",
+    questions: [
+      { id: "m1", text: "Хочу видеть описание ключевых сегментов и позиционирование относительно конкурентов (таблица)" },
+      { id: "m2", text: "Хочу увидеть описание идеи базового продукта и предложения по постепенному развитию продукта и линеек" },
+      { id: "m3", text: "Хочу увидеть описание ценообразования продукта и линеек" },
+      { id: "m4", text: "Хочу увидеть описание развития каналов продаж" },
+      { id: "m5", text: "Хочу увидеть описание системы продвижения" }
+    ]
+  },
+  {
+    title: "Дополнительно",
+    questions: [
+      { id: "d1", text: "Хочу увидеть предложения по рецептуре, технологии и составу" },
+      { id: "d2", text: "Хочу увидеть предложения по форм-факторам и упаковке" }
+    ]
+  }
+] as const;
+
+const createDiagnosticsState = (): Record<string, DiagnosticAnswer> => {
+  const state: Record<string, DiagnosticAnswer> = {};
+  DIAGNOSTIC_SECTIONS.forEach((section) => {
+    section.questions.forEach((question) => {
+      state[question.id] = null;
+    });
+  });
+  return state;
+};
+
+const sanitizeDiagnostics = (source?: Record<string, DiagnosticAnswer | string | null>) => {
+  const base = createDiagnosticsState();
+  if (!source) return base;
+  Object.entries(source).forEach(([key, value]) => {
+    if (key in base) {
+      base[key] = value === "yes" || value === "no" ? value : null;
+    }
+  });
+  return base;
+};
 
 const AGE_SEGMENTS = ["2–7", "8–18", "18–25", "26–45", "46–60", "60+", "80+"];
 const GROUP_SEGMENTS = ["Женщины", "Мужчины", "Неважно"];
-
-const painHints: Record<string, string[]> = {
-  default: [
-    "Покупателям сложно понять, чем продукт отличается от конкурентов",
-    "Есть сомнения в натуральности и составе продукта",
-    "Не хватает повода выбрать именно наш бренд в момент покупки",
-    "Скучный вкус: нет эмоций и ощущения открытия",
-    "Нет уверенности, что продукт подойдёт всей семье"
-  ],
-  "Колбаса варёная": [
-    "Ассоциируется с детсадовской столовой и однообразием",
-    "Есть страх, что продукт перенасыщен усилителями и добавками"
-  ],
-  "Колбаса варёная::0–3": [
-    "Родители переживают за непонятный состав и мягкость продукта",
-    "Нет уверенности, что малыш захочет попробовать что-то новое"
-  ],
-  "Колбаса варёная::25–34": [
-    "Молодым семьям нужна быстрая, но при этом полезная альтернатива",
-    "Сложно найти колбасу, которой доверяешь для детей"
-  ],
-  "Паштет": [
-    "Паштеты воспринимаются как тяжёлый и «взрослый» продукт",
-    "Не хватает лёгкого, дружелюбного вкуса и подач"
-  ],
-  "Паштет::3–6": [
-    "Детям не нравится текстура — нет игрового употребления",
-    "Родители не уверены в свежести и происхождении ингредиентов"
-  ],
-  "Копчёности": [
-    "Пугает сильный дым и ощущение «химического» послевкусия",
-    "Нет ощущения лёгкости и контроля калорий"
-  ],
-  "Копчёности::35–44": [
-    "Хочется специального вкуса для вечеринок, но без чувства тяжести",
-    "Сложно найти копчёность, которой можно доверять каждый день"
-  ],
-  "default::0–3": [
-    "Не уверены, что продукт безопасен и понравится ребёнку",
-    "Хочется мягкий вкус без резких ароматов"
-  ],
-  "default::25–34": [
-    "Мало продуктов, которые совмещают пользу и эмоцию",
-    "Ищут простые решения для насыщенных будней"
-  ],
-  "default::35–44": [
-    "Хочется продукта, который можно подать гостям без стеснения",
-    "Нужны гарантии качества и прозрачный состав"
-  ],
-  Женщины: [
-    "Нет ощущения контроля калорий и баланса БЖУ",
-    "Хочется продукта, который подчеркнёт заботу о себе"
-  ],
-  Мужчины: [
-    "Сомнения, что продукт действительно сытный и насыщенный",
-    "Сложно найти вкус, который выделяется на фоне привычных брендов"
-  ]
-};
 
 type AudienceSets = {
   age: Set<string>;
@@ -81,12 +94,14 @@ type FormState = {
   temperature: number;
   pain: string;
   audience: AudienceSets;
+  diagnostics: Record<string, DiagnosticAnswer>;
 };
 
 type DraftData = {
   header?: DraftHeader;
   comment?: string;
   temperature?: number;
+  diagnostics?: Record<string, DiagnosticAnswer>;
   [key: string]: unknown;
 };
 
@@ -95,6 +110,7 @@ type GeneratorFormProps = {
   onLoadingChange?: (isLoading: boolean) => void;
   projectId?: string | null;
   initialDraft?: DraftData | null;
+  onSubmitStart?: () => void;
 };
 
 type DraftHeader = {
@@ -132,41 +148,9 @@ const createInitialForm = (): FormState => ({
   audience: {
     age: new Set<string>(),
     group: new Set<string>()
-  }
+  },
+  diagnostics: createDiagnosticsState()
 });
-
-function normaliseCategory(category: string | undefined): string {
-  return category?.trim() ? category.trim() : "default";
-}
-
-function collectPainHints(category: string, ages: string[], groups: string[]): string[] {
-  const hints: string[] = [];
-  const pushHint = (hint: string) => {
-    if (!hint || hints.includes(hint)) return;
-    hints.push(hint);
-  };
-
-  const categoryKey = normaliseCategory(category);
-
-  painHints[categoryKey]?.forEach(pushHint);
-
-  ages.forEach((age) => {
-    painHints[`${categoryKey}::${age}`]?.forEach(pushHint);
-    painHints[`default::${age}`]?.forEach(pushHint);
-  });
-
-  groups.forEach((group) => {
-    painHints[group]?.forEach(pushHint);
-  });
-
-  if (hints.length === 0) {
-    painHints.default?.forEach(pushHint);
-  } else {
-    painHints.default?.forEach(pushHint);
-  }
-
-  return hints;
-}
 
 function parseAudience(source: DraftHeader["audience"]): { age: Set<string>; group: Set<string> } {
   const initial = {
@@ -205,13 +189,10 @@ function GeneratingIcons() {
   return <span className="text-lg">{icons[currentIcon]}</span>;
 }
 
-export default function GeneratorForm({ onDraftGenerated, onLoadingChange, projectId, initialDraft }: GeneratorFormProps) {
+export default function GeneratorForm({ onDraftGenerated, onLoadingChange, projectId, initialDraft, onSubmitStart }: GeneratorFormProps) {
   const [form, setForm] = useState<FormState>(() => createInitialForm());
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFormReady, setIsFormReady] = useState(false);
-  const customCategoryRef = useRef<HTMLInputElement | null>(null);
-
-  const showCustomCategoryInput = false; // кастомный ввод всегда, без селекта
 
   useEffect(() => {
     if (!initialDraft) return;
@@ -237,35 +218,24 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
       comment,
       temperature,
       pain: header?.pain ?? "",
-      audience
+      audience,
+      diagnostics: sanitizeDiagnostics(initialDraft?.diagnostics)
     });
   }, [initialDraft]);
 
-  const effectiveCategory = showCustomCategoryInput ? form.categoryCustom.trim() : form.category.trim();
+  const rawCategory = form.category;
+  const trimmedCategory = rawCategory.trim();
   const audienceAge = useMemo(() => Array.from(form.audience.age), [form.audience.age]);
   const audienceGroups = useMemo(() => Array.from(form.audience.group), [form.audience.group]);
 
-  const painHintsList = useMemo(
-    () => collectPainHints(effectiveCategory || "default", audienceAge, audienceGroups),
-    [audienceAge, audienceGroups, effectiveCategory]
-  );
-
   useEffect(() => {
-    const ready = Boolean(effectiveCategory) && Boolean(form.pain.trim());
+    const ready = Boolean(trimmedCategory) && Boolean(form.pain.trim());
     setIsFormReady(ready);
-  }, [effectiveCategory, form.pain]);
+  }, [trimmedCategory, form.pain]);
 
   useEffect(() => {
     onLoadingChange?.(isGenerating);
   }, [isGenerating, onLoadingChange]);
-
-  useEffect(() => {
-    if (!showCustomCategoryInput) return;
-    window.requestAnimationFrame(() => {
-      customCategoryRef.current?.focus();
-      customCategoryRef.current?.select();
-    });
-  }, [showCustomCategoryInput]);
 
   const updateField = useCallback(<Key extends keyof FormState>(key: Key, value: FormState[Key]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -289,26 +259,23 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
     });
   }, []);
 
-  const handleCategoryChange = useCallback((value: string) => {
-    if (value !== CUSTOM_CATEGORY_OPTION) {
-      setForm((prev) => ({
+  const handleDiagnosticAnswer = useCallback((id: string, value: Exclude<DiagnosticAnswer, null>) => {
+    setForm((prev) => {
+      const nextValue = prev.diagnostics[id] === value ? null : value;
+      return {
         ...prev,
-        category: value,
-        categoryCustom: ""
-      }));
-      return;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      category: value
-    }));
+        diagnostics: {
+          ...prev.diagnostics,
+          [id]: nextValue
+        }
+      };
+    });
   }, []);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      const categoryValue = effectiveCategory;
+      const categoryValue = trimmedCategory;
       const painValue = form.pain.trim();
 
       if (!categoryValue) {
@@ -322,6 +289,7 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
       }
 
       setIsGenerating(true);
+      onSubmitStart?.();
 
       try {
         const response = await fetch("/api/generate", {
@@ -334,6 +302,7 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
             comment: form.comment.trim() || undefined,
             name: form.name.trim() || undefined,
             temperature: Number(form.temperature),
+            diagnostics: form.diagnostics,
             projectId: projectId || undefined
           })
         });
@@ -354,7 +323,7 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
         setIsGenerating(false);
       }
     },
-    [audienceAge, audienceGroups, effectiveCategory, form.comment, form.name, form.pain, form.temperature, onDraftGenerated, projectId]
+    [audienceAge, audienceGroups, trimmedCategory, form.comment, form.name, form.pain, form.temperature, onDraftGenerated, projectId]
   );
 
   const buttonClassName = useMemo(() => {
@@ -388,7 +357,7 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
           className="w-full rounded-2xl border border-neutral-200 bg-white/90 px-4 py-3 text-base text-neutral-700 shadow-inner transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#FF5B5B] placeholder:text-xs md:placeholder:text-sm placeholder:text-neutral-400 leading-tight min-h-[150px] resize-none"
           rows={5}
           placeholder='Введите категорию продукта: можно по официальной классификации, например «колбаса вареная», а можно в произвольной форме, например «фруктовое печенье», или  «батончик для спортивного питания», или  «готовый завтрак для детей», или «перекус в машину».'
-          value={effectiveCategory}
+          value={rawCategory}
           onChange={(event) => {
             const value = event.target.value;
             updateField("category", value);
@@ -510,20 +479,54 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
           value={form.pain}
           onChange={(event) => updateField("pain", event.target.value)}
         />
-        <p className="text-xs text-neutral-500">Можете выбрать боль из подсказок.</p>
-        <div id="pain-hints" className="flex flex-wrap gap-2" aria-label="Подсказки болей">
-          {painHintsList.map((hint) => (
-            <button
-              key={hint}
-              type="button"
-              className="hint-chip"
-              onClick={() => updateField("pain", hint)}
-            >
-              {hint}
-            </button>
+      </div>
+
+      <section className="flex flex-col gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
+        <div>
+          <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600">
+            ПОЖЕЛАНИЯ К НОВОМУ ПРОДУКТУ
+          </h3>
+          <p className="text-xs text-neutral-500 mt-1">
+            Отметьте, какие секции особенно важны для вас — это поможет сделать паспорт точнее.
+          </p>
+        </div>
+        <div className="space-y-6">
+          {DIAGNOSTIC_SECTIONS.map((section) => (
+            <div key={section.title} className="space-y-3">
+              <h4 className="text-sm font-semibold text-neutral-600">{section.title}</h4>
+              <div className="space-y-3">
+                {section.questions.map((question) => (
+                  <div
+                    key={question.id}
+                    className="flex flex-col gap-2 rounded-2xl border border-neutral-200 bg-white/70 p-3 md:flex-row md:items-center md:justify-between"
+                  >
+                    <p className="text-sm text-neutral-700">{question.text}</p>
+                    <div className="flex items-center gap-2">
+                      {(["yes", "no"] as const).map((option) => {
+                        const isActive = form.diagnostics[question.id] === option;
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 ${
+                              isActive
+                                ? "bg-[#FF5B5B] text-white shadow-[0_10px_20px_rgba(255,91,91,0.35)]"
+                                : "border border-neutral-200 bg-white/80 text-neutral-600 hover:border-[#ff4d4f]/60 hover:text-[#ff4d4f]"
+                            }`}
+                            onClick={() => handleDiagnosticAnswer(question.id, option)}
+                          >
+                            {option === "yes" ? "Да" : "Нет"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
-      </div>
+      </section>
 
       <div className="flex flex-wrap items-center gap-4 mt-2">
         <button type="submit" id="btn-generate" className={buttonClassName} disabled={isGenerating}>
