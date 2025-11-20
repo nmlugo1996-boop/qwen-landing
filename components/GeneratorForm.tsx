@@ -328,7 +328,7 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
 
   const buttonClassName = useMemo(() => {
     const baseClasses = [
-      "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF5B5B] to-[#FF7B5B] px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 w-full sm:w-auto relative h-12"
+      "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF5B5B] to-[#FF7B5B] px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 w-full sm:w-auto relative h-14"
     ];
     
     if (isGenerating) {
@@ -529,7 +529,8 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
       </section>
 
       <div className="flex flex-wrap items-center gap-4 mt-2">
-        <button type="submit" id="btn-generate" className={buttonClassName} disabled={isGenerating}>
+        <div className="w-full flex justify-center">
+          <button type="submit" id="btn-generate" className={buttonClassName} disabled={isGenerating}>
           {isGenerating ? (
             <span className="flex items-center justify-center gap-2">
               <GeneratingIcons />
@@ -538,7 +539,8 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
           ) : (
             "Создать уникальный продукт"
           )}
-        </button>
+          </button>
+        </div>
       </div>
     </form>
   );
