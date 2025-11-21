@@ -122,7 +122,10 @@ type DraftHeader = {
   audience?: string[] | string;
 };
 
-const showToast = (message: string, kind: "info" | "ok" | "warn" | "error" = "info") => {
+const showToast = (
+  message: string,
+  kind: "info" | "ok" | "warn" | "error" = "info"
+) => {
   if (typeof window === "undefined") return;
   const toast = document.getElementById("toast");
   if (!toast) return;
@@ -139,7 +142,7 @@ const showToast = (message: string, kind: "info" | "ok" | "warn" | "error" = "in
 };
 
 const createInitialForm = (): FormState => ({
-  category: "", // пусто по умолчанию — показываем только плейсхолдер
+  category: "",
   categoryCustom: "",
   name: "",
   comment: "",
@@ -152,7 +155,10 @@ const createInitialForm = (): FormState => ({
   diagnostics: createDiagnosticsState()
 });
 
-function parseAudience(source: DraftHeader["audience"]): { age: Set<string>; group: Set<string> } {
+function parseAudience(source: DraftHeader["audience"]): {
+  age: Set<string>;
+  group: Set<string>;
+} {
   const initial = {
     age: new Set<string>(),
     group: new Set<string>()
@@ -189,10 +195,19 @@ function GeneratingIcons() {
   return <span className="text-lg">{icons[currentIcon]}</span>;
 }
 
-export default function GeneratorForm({ onDraftGenerated, onLoadingChange, projectId, initialDraft, onSubmitStart }: GeneratorFormProps) {
+export default function GeneratorForm({
+  onDraftGenerated,
+  onLoadingChange,
+  projectId,
+  initialDraft,
+  onSubmitStart
+}: GeneratorFormProps) {
   const [form, setForm] = useState<FormState>(() => createInitialForm());
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFormReady, setIsFormReady] = useState(false);
+
+  const [painSuggestions, setPainSuggestions] = useState<string[]>([]);
+  const [isGeneratingPains, setIsGeneratingPains] = useState(false);
 
   useEffect(() => {
     if (!initialDraft) return;
@@ -204,8 +219,8 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
       typeof initialDraft?.comment === "string"
         ? initialDraft.comment
         : typeof initialDraft?.comment === "number"
-          ? String(initialDraft.comment)
-          : "";
+        ? String(initialDraft.comment)
+        : "";
     const temperature =
       typeof initialDraft?.temperature === "number"
         ? Math.min(1, Math.max(0, initialDraft.temperature))
@@ -225,8 +240,14 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
 
   const rawCategory = form.category;
   const trimmedCategory = rawCategory.trim();
-  const audienceAge = useMemo(() => Array.from(form.audience.age), [form.audience.age]);
-  const audienceGroups = useMemo(() => Array.from(form.audience.group), [form.audience.group]);
+  const audienceAge = useMemo(
+    () => Array.from(form.audience.age),
+    [form.audience.age]
+  );
+  const audienceGroups = useMemo(
+    () => Array.from(form.audience.group),
+    [form.audience.group]
+  );
 
   useEffect(() => {
     const ready = Boolean(trimmedCategory) && Boolean(form.pain.trim());
@@ -237,40 +258,104 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
     onLoadingChange?.(isGenerating);
   }, [isGenerating, onLoadingChange]);
 
-  const updateField = useCallback(<Key extends keyof FormState>(key: Key, value: FormState[Key]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const updateField = useCallback(
+    <Key extends keyof FormState>(key: Key, value: FormState[Key]) => {
+      setForm((prev) => ({ ...prev, [key]: value }));
+    },
+    []
+  );
 
-  const toggleAudience = useCallback((type: keyof AudienceSets, value: string) => {
-    setForm((prev) => {
-      const nextSet = new Set(prev.audience[type]);
-      if (nextSet.has(value)) {
-        nextSet.delete(value);
-      } else {
-        nextSet.add(value);
+  const toggleAudience = useCallback(
+    (type: keyof AudienceSets, value: string) => {
+      setForm((prev) => {
+        const nextSet = new Set(prev.audience[type]);
+        if (nextSet.has(value)) {
+          nextSet.delete(value);
+        } else {
+          nextSet.add(value);
+        }
+        return {
+          ...prev,
+          audience: {
+            ...prev.audience,
+            [type]: nextSet
+          }
+        };
+      });
+    },
+    []
+  );
+
+  const handleDiagnosticAnswer = useCallback(
+    (id: string, value: Exclude<DiagnosticAnswer, null>) => {
+      setForm((prev) => {
+        const nextValue = prev.diagnostics[id] === value ? null : value;
+        return {
+          ...prev,
+          diagnostics: {
+            ...prev.diagnostics,
+            [id]: nextValue
+          }
+        };
+      });
+    },
+    []
+  );
+
+  const handleGeneratePains = useCallback(async () => {
+    const categoryValue = trimmedCategory;
+
+    if (!categoryValue) {
+      showToast("Сначала заполните категорию продукта", "warn");
+      return;
+    }
+
+    setIsGeneratingPains(true);
+    setPainSuggestions([]);
+
+    try {
+      const response = await fetch("/api/generate-pains", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: categoryValue,
+          audience: [...audienceAge, ...audienceGroups],
+          name: form.name.trim() || undefined,
+          comment: form.comment.trim() || undefined,
+          painDraft: form.pain.trim() || undefined
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error?.error || `API ${response.status}`);
       }
-      return {
-        ...prev,
-        audience: {
-          ...prev.audience,
-          [type]: nextSet
-        }
-      };
-    });
-  }, []);
 
-  const handleDiagnosticAnswer = useCallback((id: string, value: Exclude<DiagnosticAnswer, null>) => {
-    setForm((prev) => {
-      const nextValue = prev.diagnostics[id] === value ? null : value;
-      return {
-        ...prev,
-        diagnostics: {
-          ...prev.diagnostics,
-          [id]: nextValue
-        }
-      };
-    });
-  }, []);
+      const data = await response.json();
+      if (!data || !Array.isArray(data.pains) || !data.pains.length) {
+        throw new Error("Не удалось получить список болей");
+      }
+
+      setPainSuggestions(data.pains);
+      showToast("Список болей сгенерирован. Выберите подходящую.", "ok");
+    } catch (error) {
+      console.error(error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Ошибка при генерации списка болей";
+      showToast(message, "error");
+    } finally {
+      setIsGeneratingPains(false);
+    }
+  }, [
+    trimmedCategory,
+    audienceAge,
+    audienceGroups,
+    form.name,
+    form.comment,
+    form.pain
+  ]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -314,31 +399,49 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
 
         const draft = await response.json();
         onDraftGenerated?.(draft);
-        showToast("Готово! Ниже можете посмотреть и скачать полный паспорт продукта!", "ok");
+        showToast(
+          "Готово! Ниже можете посмотреть и скачать полный паспорт продукта!",
+          "ok"
+        );
       } catch (error) {
         console.error(error);
-        const message = error instanceof Error ? error.message : "Не удалось сгенерировать паспорт";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Не удалось сгенерировать паспорт";
         showToast(message, "error");
       } finally {
         setIsGenerating(false);
       }
     },
-    [audienceAge, audienceGroups, trimmedCategory, form.comment, form.name, form.pain, form.temperature, onDraftGenerated, projectId]
+    [
+      audienceAge,
+      audienceGroups,
+      trimmedCategory,
+      form.comment,
+      form.name,
+      form.pain,
+      form.temperature,
+      onDraftGenerated,
+      projectId
+    ]
   );
 
   const buttonClassName = useMemo(() => {
     const baseClasses = [
       "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF5B5B] to-[#FF7B5B] px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 w-full sm:w-auto relative h-14"
     ];
-    
+
     if (isGenerating) {
       baseClasses.push("btn-generating");
     } else if (isFormReady) {
-      baseClasses.push("animate-pulse saturate-150 shadow-[0_0_24px_rgba(255,91,91,0.45)]");
+      baseClasses.push(
+        "animate-pulse saturate-150 shadow-[0_0_24px_rgba(255,91,91,0.45)]"
+      );
     } else {
       baseClasses.push("opacity-90");
     }
-    
+
     return baseClasses.join(" ");
   }, [isFormReady, isGenerating]);
 
@@ -349,7 +452,10 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
       id="form"
     >
       <div className="flex flex-col gap-2 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
-        <label className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600" htmlFor="category">
+        <label
+          className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600"
+          htmlFor="category"
+        >
           Категория
         </label>
         <textarea
@@ -367,7 +473,10 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
       </div>
 
       <div className="flex flex-col gap-2 md:gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
-        <label className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600" htmlFor="productName">
+        <label
+          className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600"
+          htmlFor="productName"
+        >
           Название (оставь пустым — придумаем)
         </label>
         <input
@@ -380,7 +489,10 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
       </div>
 
       <div className="flex flex-col gap-2 md:gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
-        <label className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600" htmlFor="comment">
+        <label
+          className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600"
+          htmlFor="comment"
+        >
           Комментарий
         </label>
         <textarea
@@ -394,10 +506,15 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
       </div>
 
       <div className="flex flex-col gap-2 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
-        <label className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600" htmlFor="temperature">
+        <label
+          className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600"
+          htmlFor="temperature"
+        >
           Креативность
         </label>
-        <p className="text-xs text-neutral-500">Задайте уровень креативности</p>
+        <p className="text-xs text-neutral-500">
+          Задайте уровень креативности
+        </p>
         <input
           id="temperature"
           type="range"
@@ -405,15 +522,25 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
           max="1"
           step="0.1"
           value={form.temperature}
-          onChange={(event) => updateField("temperature", Number(event.target.value) as FormState["temperature"])}
+          onChange={(event) =>
+            updateField(
+              "temperature",
+              Number(event.target.value) as FormState["temperature"]
+            )
+          }
           className="accent-[#ff4d4f]"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <div id="audience-age" className="flex flex-col gap-3 md:gap-4 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
+        <div
+          id="audience-age"
+          className="flex flex-col gap-3 md:gap-4 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5"
+        >
           <div>
-            <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600">Целевая аудитория</h3>
+            <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600">
+              Целевая аудитория
+            </h3>
             <p className="text-xs text-neutral-500 mt-1">Возраст</p>
           </div>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-2">
@@ -440,7 +567,10 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
           </div>
         </div>
 
-        <div id="audience-gender" className="flex flex-col gap-3 md:gap-4 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
+        <div
+          id="audience-gender"
+          className="flex flex-col gap-3 md:gap-4 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5"
+        >
           <p className="text-xs text-neutral-500">Пол</p>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2">
             {GROUP_SEGMENTS.map((group) => (
@@ -467,18 +597,63 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
-        <label className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600" htmlFor="pain">
-          Потребительская боль
-        </label>
+      {/* Потребительская боль + генерация болей */}
+      <div className="flex flex-col gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <label
+              className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600"
+              htmlFor="pain"
+            >
+              Потребительская боль
+            </label>
+            <p className="mt-1 text-xs text-neutral-500">
+              Можно ввести свою формулировку или сгенерировать варианты на основе данных выше.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGeneratePains}
+            disabled={isGeneratingPains}
+            className="inline-flex items-center rounded-full bg-[#ff5b5b] px-4 py-2 text-xs md:text-sm font-semibold text-white shadow-sm transition hover:bg-[#ff7171] disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isGeneratingPains ? "Генерация…" : "Сгенерировать боли"}
+          </button>
+        </div>
+
         <textarea
           id="pain"
           className="w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-base text-neutral-700 shadow-inner transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#ff4d4f]/30"
-          rows={3}
-          placeholder="Опишите боль своего потребителя, если вы её знаете."
+          rows={4}
+          placeholder="Опишите боль своего потребителя или выберите один из вариантов ниже."
           value={form.pain}
           onChange={(event) => updateField("pain", event.target.value)}
         />
+
+        {painSuggestions.length > 0 && (
+          <div className="mt-2 space-y-2">
+            <p className="text-xs text-neutral-500">
+              Нажмите на подходящую боль — она подставится в поле выше:
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {painSuggestions.map((pain, index) => (
+                <button
+                  key={`${index}-${pain.slice(0, 12)}`}
+                  type="button"
+                  onClick={() => {
+                    updateField("pain", pain);
+                    setPainSuggestions([]);
+                    showToast("Боль подставлена в поле", "ok");
+                  }}
+                  className="w-full text-left rounded-2xl border border-neutral-200 bg-white/80 px-3 py-2 text-xs md:text-sm text-neutral-700 transition-all duration-200 hover:border-[#ff4d4f]/60 hover:bg-[#ffecec]"
+                >
+                  {pain}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <section className="flex flex-col gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
@@ -493,7 +668,9 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
         <div className="space-y-6">
           {DIAGNOSTIC_SECTIONS.map((section) => (
             <div key={section.title} className="space-y-3">
-              <h4 className="text-sm font-semibold text-neutral-600">{section.title}</h4>
+              <h4 className="text-sm font-semibold text-neutral-600">
+                {section.title}
+              </h4>
               <div className="space-y-3">
                 {section.questions.map((question) => (
                   <div
@@ -503,7 +680,8 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
                     <p className="text-sm text-neutral-700">{question.text}</p>
                     <div className="flex items-center gap-2">
                       {(["yes", "no"] as const).map((option) => {
-                        const isActive = form.diagnostics[question.id] === option;
+                        const isActive =
+                          form.diagnostics[question.id] === option;
                         return (
                           <button
                             key={option}
@@ -513,7 +691,9 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
                                 ? "bg-[#FF5B5B] text-white shadow-[0_10px_20px_rgba(255,91,91,0.35)]"
                                 : "border border-neutral-200 bg-white/80 text-neutral-600 hover:border-[#ff4d4f]/60 hover:text-[#ff4d4f]"
                             }`}
-                            onClick={() => handleDiagnosticAnswer(question.id, option)}
+                            onClick={() =>
+                              handleDiagnosticAnswer(question.id, option)
+                            }
                           >
                             {option === "yes" ? "Да" : "Нет"}
                           </button>
@@ -530,20 +710,23 @@ export default function GeneratorForm({ onDraftGenerated, onLoadingChange, proje
 
       <div className="flex flex-wrap items-center gap-4 mt-2">
         <div className="w-full flex justify-center">
-          <button type="submit" id="btn-generate" className={buttonClassName} disabled={isGenerating}>
-          {isGenerating ? (
-            <span className="flex items-center justify-center gap-2">
-              <GeneratingIcons />
-              <span>Создаём продукт…</span>
-            </span>
-          ) : (
-            "Создать уникальный продукт"
-          )}
+          <button
+            type="submit"
+            id="btn-generate"
+            className={buttonClassName}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <span className="flex items-center justify-center gap-2">
+                <GeneratingIcons />
+                <span>Создаём продукт…</span>
+              </span>
+            ) : (
+              "Создать уникальный продукт"
+            )}
           </button>
         </div>
       </div>
     </form>
   );
 }
-
-

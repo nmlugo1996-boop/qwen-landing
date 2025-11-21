@@ -256,12 +256,12 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
           </div>
 
           {/* Кнопка копирования паспорта */}
-          <div className="flex justify-end mt-2 md:mt-3">
+          <div className="flex justify-center mt-4 md:mt-5">
             <button
               type="button"
               onClick={handleCopy}
               disabled={!draft}
-              className="px-4 py-2 rounded-full bg-[#ff5b5b] text-white text-xs md:text-sm font-semibold shadow-sm hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               Скопировать паспорт
             </button>

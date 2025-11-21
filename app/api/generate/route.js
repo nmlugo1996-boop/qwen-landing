@@ -2,26 +2,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import path from "node:path";
 import fs from "node:fs/promises";
-import { supaServer, hasSupabase } from "@/lib/supabaseClient";
 
 export const runtime = "nodejs";
 
-// ===== ВАЛИДАЦИЯ ВХОДА =====
 const INPUT_SCHEMA = z.object({
   category: z.string().min(1),
   audience: z.array(z.string()).default([]),
-  pain: z.string().optional(),
-  innovation: z.string().optional(),
-  comment: z.string().optional(),
   name: z.string().optional(),
-  temperature: z.number().min(0).max(1).default(0.7),
-  projectId: z.string().uuid().optional(),
-  diagnostics: z
-    .record(z.union([z.literal("yes"), z.literal("no"), z.null()]))
-    .optional()
+  comment: z.string().optional(),
+  painDraft: z.string().optional()
 });
 
-// ===== ЗАГРУЗКА ВСЕХ reference-фАЙЛОВ =====
+// Берём те же reference, что и основной маршрут
 async function loadReferenceDocs() {
   const baseDir = path.join(process.cwd(), "reference");
 
@@ -48,8 +40,7 @@ async function loadReferenceDocs() {
   return contents.filter(Boolean).join("\n\n");
 }
 
-// ===== ВЫЗОВ QWEN =====
-async function callLLM(payload, references) {
+async function callLLMForPains(payload, references) {
   const apiUrl =
     process.env.QWEN_API_URL || "https://openrouter.ai/api/v1/chat/completions";
   const apiKey = process.env.QWEN_API_KEY;
@@ -61,54 +52,52 @@ async function callLLM(payload, references) {
   }
 
   const systemPrompt = [
-    "Ты — профессиональный продуктолог, бренд-стратег, когнитивный аналитик и маркетолог.",
-    "Ты работаешь по методике «Полярная Звезда» и создаёшь когнитивно-сенсорные маркетинговые паспорта продуктов.",
+    "Ты — стратег по продуктам и маркетолог.",
+    "Твоя задача — на основе описания продукта и аудитории сформулировать список возможных Потребительских болей.",
     "",
-    "Главные принципы:",
-    "1) Продукт = переобучение потребителя: новая модель потребления, новая сенсорика, новый ритуал.",
-    "2) Ценность = ответ на боль + новая модель потребления.",
-    "3) Новая привычка = новый формат действия (ритуал, эмоциональный сценарий).",
-    "4) Сенсорика усиливает привычку.",
-    "5) Бренд усиливает самоидентификацию.",
-    "6) Маркетинг разворачивает стратегию 3–5–10 лет.",
-    "7) Все блоки связаны между собой.",
+    "ВСЕГДА отвечай строго на русском языке.",
     "",
-    "Работай строго на русском языке.",
-    "Обязательно верни один валидный JSON.",
+    "Формат ответа — только один JSON-объект вида:",
+    "{",
+    '  "pains": [',
+    '    "Боль 1...",',
+    '    "Боль 2...",',
+    '    "... до 10 болей максимум"',
+    "  ]",
+    "}",
     "",
-    "Используй эталонные примеры только как стиль, НЕ копируй названия и сюжеты.",
-    "Запрещено использовать паттерны «мяу», «котики», животные, если пользователь сам их не вводит.",
+    "Требования к болям:",
+    "- не дублировать друг друга;",
+    "- каждая формулировка должна быть конкретной, живой, понятной человеку;",
+    "- длина одной боли — 1–2 предложения, не больше;",
+    "- боли должны опираться на категорию продукта, аудиторию и комментарии пользователя;",
+    '- не использовать слово «боль» внутри формулировки; говори обычным языком («люди сталкиваются с тем, что…», «человек боится, что…» и т.п.).',
     "",
-    "ЭТАЛОННЫЕ ПРИМЕРЫ:",
+    "Используй эталонные примеры только как стиль формулировок, но НЕ копируй их дословно.",
     references || ""
   ]
     .filter(Boolean)
     .join("\n");
 
+  const userPayload = {
+    category: payload.category,
+    audience: payload.audience,
+    name: payload.name ?? null,
+    comment: payload.comment ?? null,
+    painDraft: payload.painDraft ?? null
+  };
+
   const messages = [
     { role: "system", content: systemPrompt },
     {
       role: "user",
-      content: JSON.stringify(
-        {
-          category: payload.category,
-          name: payload.name ?? null,
-          audience: payload.audience,
-          pain: payload.pain ?? null,
-          innovation: payload.innovation ?? null,
-          comment: payload.comment ?? null,
-          temperature: payload.temperature,
-          diagnostics: payload.diagnostics ?? null
-        },
-        null,
-        2
-      )
+      content: JSON.stringify(userPayload, null, 2)
     }
   ];
 
   const body = {
     model,
-    temperature: payload.temperature ?? 0.7,
+    temperature: 0.7,
     response_format: { type: "json_object" },
     messages
   };
@@ -132,83 +121,47 @@ async function callLLM(payload, references) {
   const data = await response.json();
   const content = data?.choices?.[0]?.message?.content;
   if (!content) {
-    throw new Error("LLM вернул пустой ответ");
+    throw new Error("Модель вернула пустой ответ");
   }
 
+  let parsed;
   try {
-    return JSON.parse(content);
-  } catch {
-    throw new Error("Ошибка парсинга JSON.");
+    parsed = JSON.parse(content);
+  } catch (error) {
+    console.error("Failed to parse JSON from LLM:", content);
+    throw new Error("Не удалось распарсить JSON с болями");
   }
+
+  if (!parsed || !Array.isArray(parsed.pains)) {
+    throw new Error("Ответ модели не содержит корректный массив pains");
+  }
+
+  const pains = parsed.pains
+    .map((p) => (typeof p === "string" ? p.trim() : ""))
+    .filter(Boolean);
+
+  if (!pains.length) {
+    throw new Error("Модель вернула пустой список болей");
+  }
+
+  return pains;
 }
 
-// ===== ОСНОВНОЙ POST =====
 export async function POST(request) {
   try {
     const body = await request.json();
     const payload = INPUT_SCHEMA.parse(body);
     const references = await loadReferenceDocs();
-
-    const draft = await callLLM(payload, references);
-
-    if (hasSupabase) {
-      await persistDraft(draft);
-    }
-
-    return NextResponse.json(draft);
+    const pains = await callLLMForPains(payload, references);
+    return NextResponse.json({ pains });
   } catch (error) {
-    console.error("Generate API error", error);
-    return NextResponse.json(
-      { error: error.message || "Internal error" },
-      { status: 400 }
-    );
+    console.error("Generate pains API error", error);
+    const message =
+      error instanceof z.ZodError
+        ? error.flatten()
+        : { error: error.message || "Internal error" };
+    return NextResponse.json(message, { status: 400 });
   }
 }
 
-// ===== СОХРАНЕНИЕ В БАЗУ =====
-async function persistDraft(result) {
-  try {
-    if (!hasSupabase) return;
-
-    const supa = supaServer();
-    if (!supa) return;
-
-    const email =
-      process.env.NEXT_PUBLIC_FALLBACK_EMAIL || "demo@example.com";
-
-    await supa.from("users").upsert({ email }).select().single();
-
-    const title = result?.header?.name || "Без названия";
-    const category = result?.header?.category || null;
-
-    let { data: proj } = await supa
-      .from("projects")
-      .select("id")
-      .eq("title", title)
-      .limit(1)
-      .single();
-
-    if (!proj) {
-      const ins = await supa
-        .from("projects")
-        .insert({ title, category })
-        .select()
-        .single();
-      proj = ins.data;
-    }
-
-    if (!proj?.id) return;
-
-    await supa.from("drafts").insert({
-      project_id: proj.id,
-      data_json: result,
-      model:
-        process.env.TEXT_MODEL_NAME ||
-        process.env.MODEL_NAME ||
-        "unknown"
-    });
-  } catch (e) {
-    console.warn("persistDraft error:", e.message);
-  }
-}
 
