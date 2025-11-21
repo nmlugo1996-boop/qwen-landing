@@ -602,14 +602,11 @@ export default function GeneratorForm({
         <div className="flex items-start justify-between gap-3">
           <div>
             <label
-              className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600"
+              className="text-base md:text-lg font-semibold text-neutral-800"
               htmlFor="pain"
             >
               Потребительская боль
             </label>
-            <p className="mt-1 text-xs text-neutral-500">
-              Можно ввести свою формулировку или сгенерировать варианты на основе данных выше.
-            </p>
           </div>
 
           <button
@@ -618,7 +615,7 @@ export default function GeneratorForm({
             disabled={isGeneratingPains}
             className="inline-flex items-center rounded-full bg-[#ff5b5b] px-4 py-2 text-xs md:text-sm font-semibold text-white shadow-sm transition hover:bg-[#ff7171] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isGeneratingPains ? "Генерация…" : "Сгенерировать боли"}
+            {isGeneratingPains ? "Генерация…" : "ПОКАЗАТЬ БОЛИ"}
           </button>
         </div>
 
@@ -626,7 +623,7 @@ export default function GeneratorForm({
           id="pain"
           className="w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-base text-neutral-700 shadow-inner transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#ff4d4f]/30"
           rows={4}
-          placeholder="Опишите боль своего потребителя или выберите один из вариантов ниже."
+          placeholder={`Если не знаете или не можете сформулировать боль, нажмите кнопку "Показать боли", и выберите боль из списка ниже, либо попытайтесь сформулировать свой вариант боли.`}
           value={form.pain}
           onChange={(event) => updateField("pain", event.target.value)}
         />

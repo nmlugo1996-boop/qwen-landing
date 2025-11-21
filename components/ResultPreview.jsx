@@ -231,29 +231,15 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
             );
           })}
 
-          {/* Дополнительные секции */}
-          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
-            <h3 className="text-base md:text-lg font-semibold text-neutral-800">
-              Технология и состав
-            </h3>
-            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
-              {Array.isArray(draft?.tech) ? draft.tech.join("\n") : draft?.tech || "—"}
-            </p>
-          </div>
-          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
-            <h3 className="text-base md:text-lg font-semibold text-neutral-800">
-              Почему это звезда?
-            </h3>
-            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
-              {Array.isArray(draft?.star) ? draft.star.join("\n") : draft?.star || "—"}
-            </p>
-          </div>
-          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
-            <h3 className="text-base md:text-lg font-semibold text-neutral-800">Заключение</h3>
-            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
-              {draft?.conclusion || "—"}
-            </p>
-          </div>
+        {/* Дополнительные секции */}
+        <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
+          <h3 className="text-base md:text-lg font-semibold text-neutral-800">
+            Технология и состав
+          </h3>
+          <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
+            {Array.isArray(draft?.tech) ? draft.tech.join("\n") : draft?.tech || "—"}
+          </p>
+        </div>
 
           {/* Кнопка копирования паспорта */}
           <div className="flex justify-center mt-4 md:mt-5">
