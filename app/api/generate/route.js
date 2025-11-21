@@ -6,7 +6,7 @@ import { supaServer, hasSupabase } from "@/lib/supabaseClient";
 
 export const runtime = "nodejs";
 
-// Валидация входных данных: то, что шлёт GeneratorForm.tsx
+// ===== ВАЛИДАЦИЯ ВХОДА =====
 const INPUT_SCHEMA = z.object({
   category: z.string().min(1),
   audience: z.array(z.string()).default([]),
@@ -16,20 +16,27 @@ const INPUT_SCHEMA = z.object({
   name: z.string().optional(),
   temperature: z.number().min(0).max(1).default(0.7),
   projectId: z.string().uuid().optional(),
-  // галочки по вопросам (c1, c2, s1, ... d2)
   diagnostics: z
     .record(z.union([z.literal("yes"), z.literal("no"), z.null()]))
     .optional()
 });
 
-// Загружаем эталонные паспорта из папки reference/
+// ===== ЗАГРУЗКА ВСЕХ reference-фАЙЛОВ =====
 async function loadReferenceDocs() {
   const baseDir = path.join(process.cwd(), "reference");
+
   const files = [
     "photon_example.md",
     "cosmo_sausage_example.md",
-    "smart_drink_example.md"
+    "smart_drink_example.md",
+    "kids_breakfast_example.md",
+    "novaboost_energy.md",
+    "smart_kitchen_helper.md",
+    "car_future_example.md",
+    "smartphone_future_example.md",
+    "lifeloop_ai_assistant.md"
   ];
+
   const contents = await Promise.all(
     files.map(async (file) => {
       const fullPath = path.join(baseDir, file);
@@ -37,10 +44,11 @@ async function loadReferenceDocs() {
       return content ? `# ${file}\n${content}` : "";
     })
   );
+
   return contents.filter(Boolean).join("\n\n");
 }
 
-// Вызов Qwen через OpenRouter: генерация паспорта в JSON-формате
+// ===== ВЫЗОВ QWEN =====
 async function callLLM(payload, references) {
   const apiUrl =
     process.env.QWEN_API_URL || "https://openrouter.ai/api/v1/chat/completions";
@@ -58,74 +66,20 @@ async function callLLM(payload, references) {
     "",
     "Главные принципы:",
     "1) Продукт = переобучение потребителя: новая модель потребления, новая сенсорика, новый ритуал.",
-    "2) Ценность = ответ на боль + новая модель потребления, а не просто функция.",
-    "3) Новая привычка = новый формат действия (ритуал, микро-поведение, эмоциональный сценарий).",
-    "4) Сенсорика (зрение, звук, запах, тактильность, вкус) служит устранению боли и закреплению новой привычки.",
-    "5) Бренд усиливает самоидентификацию: потребитель чувствует себя лучше, более цельным, более «своим».",
-    "6) Маркетинг разворачивает идею во времени: стратегия 3–5–10 лет.",
-    "7) Все ответы связаны: боль → новая модель потребления → сенсорика → бренд → маркетинг → технология и вывод.",
+    "2) Ценность = ответ на боль + новая модель потребления.",
+    "3) Новая привычка = новый формат действия (ритуал, эмоциональный сценарий).",
+    "4) Сенсорика усиливает привычку.",
+    "5) Бренд усиливает самоидентификацию.",
+    "6) Маркетинг разворачивает стратегию 3–5–10 лет.",
+    "7) Все блоки связаны между собой.",
     "",
     "Работай строго на русском языке.",
-    "Верни ТОЛЬКО один валидный JSON-объект без Markdown, без комментариев и без дополнительного текста вокруг.",
-    "Структура JSON такая:",
-    "{",
-    '  "header": {',
-    '    "category": "строка — человекочитаемое описание категории продукта",',
-    '    "name": "строка — рабочее название продукта",',
-    '    "audience": "строка — описание целевой аудитории (возраст, группы)",',
-    '    "pain": "строка — основная потребительская боль, с которой работаем",',
-    '    "innovation": "строка — суть инновации/уникальности продукта"',
-    "  },",
-    '  "blocks": {',
-    '    "cognitive": [',
-    '      { "no": "1.1", "question": "Какую потребительскую боль используем для создания дизрапта?", "answer": "..." },',
-    '      { "no": "1.2", "question": "Изменение модели потребления: какой новый рынок открываем?", "answer": "..." },',
-    '      { "no": "1.3", "question": "Изменение технологии потребления: какие новые привычки потребления внедряем?", "answer": "..." },',
-    '      { "no": "1.4", "question": "Нарративы: как объясняем, что инновация нужна, полезна, выгодна?", "answer": "..." },',
-    '      { "no": "1.5", "question": "На работе с какими когнитивными функциями потребителя фокусируемся?", "answer": "..." }',
-    "    ],",
-    '    "sensory": [',
-    '      { "no": "2.1", "question": "Сильный визуальный образ", "answer": "..." },',
-    '      { "no": "2.2", "question": "Сильный аудиальный образ", "answer": "..." },',
-    '      { "no": "2.3", "question": "Сильный обонятельный образ", "answer": "..." },',
-    '      { "no": "2.4", "question": "Сильный осязательный образ", "answer": "..." },',
-    '      { "no": "2.5", "question": "Сильный вкусовой образ", "answer": "..." }',
-    "    ],",
-    '    "branding": [',
-    '      { "no": "3.1", "question": "Как улучшаем личную историю и самоидентификацию потребителя?", "answer": "..." },',
-    '      { "no": "3.2", "question": "Какой контекст поможет развить бренд? Какой помешает?", "answer": "..." },',
-    '      { "no": "3.3", "question": "Сильное ядро бренда: название, логотип, слоган, суть, доп. элементы", "answer": "..." },',
-    '      { "no": "3.4", "question": "Уникальный путь клиента с продуктом и брендом (опыт бренда)", "answer": "..." },',
-    '      { "no": "3.5", "question": "Стратегия развития бренда на 3–5–10 лет", "answer": "..." }',
-    "    ],",
-    '    "marketing": [',
-    '      { "no": "4.1", "question": "Сегментация / Позиционирование", "answer": "..." },',
-    '      { "no": "4.2", "question": "Описание базового продукта и его развитие во времени", "answer": "..." },',
-    '      { "no": "4.3", "question": "Развитие ценообразования", "answer": "..." },',
-    '      { "no": "4.4", "question": "Развитие каналов сбыта", "answer": "..." },',
-    '      { "no": "4.5", "question": "Продвижение (с фокусом на безбюджетный маркетинг)", "answer": "..." }',
-    "    ]",
-    "  },",
-    '  "tech": ["строки с предложениями по технологии и составу"],',
-    '  "star": ["строки с объяснением, почему продукт может стать звездой рынка"],',
-    '  "conclusion": "строка — цельный вывод и следующий шаг по продукту"',
-    "}",
+    "Обязательно верни один валидный JSON.",
     "",
-    "Требования к качеству:",
-    "- Каждый массив blocks.cognitive / sensory / branding / marketing содержит РОВНО 5 объектов.",
-    '- Поле \"answer\" в каждом объекте обязательно, не может быть пустым, нейтральным или заглушкой.',
-    "- Ответы должны быть конкретными, глубокими, связанными с категорией, аудиторией, болью и инновацией.",
+    "Используй эталонные примеры только как стиль, НЕ копируй названия и сюжеты.",
+    "Запрещено использовать паттерны «мяу», «котики», животные, если пользователь сам их не вводит.",
     "",
-    "Во входных данных может быть объект diagnostics: ключ — код вопроса (например, c1, s3, b5, m2, d1), значение — \"yes\", \"no\" или null.",
-    "- Если значение \"yes\" — этот пункт особенно важен для пользователя, усиливай его детализацию, примеры, сценарии.",
-    "- Если \"no\" или null — можешь отвечать стандартно.",
-    "- Несмотря на diagnostics, заполняй ВСЕ пункты 1.1–4.5 и блоки tech, star, conclusion.",
-    "",
-    "Поле tech — описывает рецептуру, технологию и состав с учётом инновации и боли.",
-    "Поле star — объясняет, почему продукт может стать «звездой» категории.",
-    "Поле conclusion — цельный вывод, следующий шаг (проверка гипотез, пилоты и т.п.).",
-    "",
-    "Используй принципы и стиль методики «Полярная Звезда», а плотность, глубину и энергию текста ориентируй на следующие эталонные примеры:",
+    "ЭТАЛОННЫЕ ПРИМЕРЫ:",
     references || ""
   ]
     .filter(Boolean)
@@ -183,17 +137,18 @@ async function callLLM(payload, references) {
 
   try {
     return JSON.parse(content);
-  } catch (error) {
-    console.error("Failed to parse LLM JSON:", content);
-    throw new Error("Не удалось распарсить ответ модели.");
+  } catch {
+    throw new Error("Ошибка парсинга JSON.");
   }
 }
 
+// ===== ОСНОВНОЙ POST =====
 export async function POST(request) {
   try {
     const body = await request.json();
     const payload = INPUT_SCHEMA.parse(body);
     const references = await loadReferenceDocs();
+
     const draft = await callLLM(payload, references);
 
     if (hasSupabase) {
@@ -203,17 +158,18 @@ export async function POST(request) {
     return NextResponse.json(draft);
   } catch (error) {
     console.error("Generate API error", error);
-    const message =
-      error instanceof z.ZodError
-        ? error.flatten()
-        : { error: error.message || "Internal error" };
-    return NextResponse.json(message, { status: 400 });
+    return NextResponse.json(
+      { error: error.message || "Internal error" },
+      { status: 400 }
+    );
   }
 }
 
+// ===== СОХРАНЕНИЕ В БАЗУ =====
 async function persistDraft(result) {
   try {
     if (!hasSupabase) return;
+
     const supa = supaServer();
     if (!supa) return;
 
@@ -251,7 +207,8 @@ async function persistDraft(result) {
         process.env.MODEL_NAME ||
         "unknown"
     });
-  } catch (error) {
-    console.warn("persistDraft error:", error.message);
+  } catch (e) {
+    console.warn("persistDraft error:", e.message);
   }
 }
+
