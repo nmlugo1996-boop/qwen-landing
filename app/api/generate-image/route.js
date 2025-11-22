@@ -59,50 +59,115 @@ async function callGeminiImageGeneration(prompt) {
   }
 
   const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("Модель вернула пустой ответ");
-  }
-
-  // Gemini может вернуть изображение в разных форматах
-  // Проверяем, есть ли URL изображения или base64
+  
+  // Логируем полный ответ для отладки
+  console.log("Gemini API response structure:", JSON.stringify(data, null, 2));
+  
+  // Проверяем разные возможные структуры ответа
   let imageUrl = null;
   let imageBase64 = null;
+  let content = null;
 
-  // Пытаемся найти URL в ответе
-  const urlMatch = content.match(/https?:\/\/[^\s]+\.(jpg|jpeg|png|webp)/i);
-  if (urlMatch) {
-    imageUrl = urlMatch[0];
+  // Вариант 1: стандартный формат OpenRouter
+  if (data?.choices?.[0]?.message?.content) {
+    content = data.choices[0].message.content;
   }
 
-  // Пытаемся найти base64 изображение
-  const base64Match = content.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
-  if (base64Match) {
-    imageBase64 = base64Match[0];
+  // Вариант 2: изображение может быть в отдельном поле
+  if (data?.image_url) {
+    imageUrl = data.image_url;
+  }
+  if (data?.image) {
+    imageBase64 = data.image;
   }
 
-  // Если это JSON ответ с изображением
-  try {
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      if (parsed.image_url) {
-        imageUrl = parsed.image_url;
-      } else if (parsed.image) {
-        imageBase64 = parsed.image;
-      } else if (parsed.url) {
-        imageUrl = parsed.url;
+  // Вариант 3: в choices может быть изображение
+  if (data?.choices) {
+    for (const choice of data.choices) {
+      // Проверяем message.content
+      if (choice.message?.content) {
+        const msgContent = choice.message.content;
+        
+        // Если content - это массив (может содержать текст и изображения)
+        if (Array.isArray(msgContent)) {
+          for (const item of msgContent) {
+            if (item.type === "image_url" && item.image_url?.url) {
+              imageUrl = item.image_url.url;
+            } else if (item.type === "image" && item.image) {
+              imageBase64 = item.image;
+            } else if (typeof item === "string") {
+              content = item;
+            }
+          }
+        } else if (typeof msgContent === "string") {
+          content = msgContent;
+        }
+      }
+
+      // Проверяем наличие изображения в других полях
+      if (choice.message?.image_url) {
+        imageUrl = choice.message.image_url;
+      }
+      if (choice.message?.image) {
+        imageBase64 = choice.message.image;
       }
     }
-  } catch (e) {
-    // Не JSON, продолжаем
+  }
+
+  // Если content есть, пытаемся извлечь изображение из текста
+  if (content && !imageUrl && !imageBase64) {
+    // Пытаемся найти URL в ответе
+    const urlMatch = content.match(/https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|webp|gif)/i);
+    if (urlMatch) {
+      imageUrl = urlMatch[0];
+    }
+
+    // Пытаемся найти base64 изображение
+    const base64Match = content.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+    if (base64Match) {
+      imageBase64 = base64Match[0];
+    }
+
+    // Пытаемся найти markdown изображение ![alt](url)
+    const markdownMatch = content.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+    if (markdownMatch) {
+      imageUrl = markdownMatch[1];
+    }
+
+    // Если это JSON ответ с изображением
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (parsed.image_url || parsed.imageUrl) {
+          imageUrl = parsed.image_url || parsed.imageUrl;
+        } else if (parsed.image) {
+          imageBase64 = parsed.image;
+        } else if (parsed.url) {
+          imageUrl = parsed.url;
+        }
+      }
+    } catch (e) {
+      // Не JSON, продолжаем
+    }
+  }
+
+  // Логируем результат парсинга
+  console.log("Parsed result:", { 
+    hasImageUrl: !!imageUrl, 
+    hasImageBase64: !!imageBase64,
+    contentLength: content?.length || 0 
+  });
+
+  if (!imageUrl && !imageBase64 && content) {
+    // Если не нашли изображение, возвращаем content для отладки
+    console.warn("Image not found in response. Content preview:", content.substring(0, 500));
   }
 
   return {
     imageUrl,
     imageBase64,
-    rawContent: content
+    rawContent: content || JSON.stringify(data, null, 2)
   };
 }
 

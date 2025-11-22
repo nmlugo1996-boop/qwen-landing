@@ -203,12 +203,20 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
 
       const result = await response.json();
 
+      console.log("Image generation result:", result);
+
       if (result.imageUrl) {
         setImageUrl(result.imageUrl);
+        setImageBase64(null);
       } else if (result.imageBase64) {
         setImageBase64(result.imageBase64);
+        setImageUrl(null);
       } else {
-        throw new Error("Изображение не было сгенерировано");
+        // Если есть rawContent, показываем его для отладки
+        const errorMsg = result.rawContent 
+          ? `Изображение не было сгенерировано. Ответ API: ${result.rawContent.substring(0, 200)}...`
+          : "Изображение не было сгенерировано. Проверьте логи сервера.";
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error("Image generation error:", error);
