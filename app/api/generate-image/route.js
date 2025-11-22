@@ -18,15 +18,33 @@ async function callGeminiImageGeneration(prompt) {
   const apiUrl =
     process.env.QWEN_API_URL || "https://openrouter.ai/api/v1/chat/completions";
   const apiKey = process.env.QWEN_API_KEY;
-  const model =
-    process.env.IMAGE_MODEL_NAME || "google/gemini-2.5-flash-image";
-
+  
+  // Явно проверяем и используем IMAGE_MODEL_NAME
+  let model = process.env.IMAGE_MODEL_NAME;
+  
+  // Если переменная не установлена или пустая, используем дефолт
+  if (!model || model.trim() === "") {
+    console.warn("IMAGE_MODEL_NAME not set, using default");
+    model = "google/gemini-2.5-flash-image";
+  }
+  
+  // Убираем пробелы и проверяем, что это не текстовая модель
+  model = model.trim();
+  
   // Логируем, какая модель используется
   console.log("=== IMAGE GENERATION DEBUG ===");
-  console.log("IMAGE_MODEL_NAME from env:", process.env.IMAGE_MODEL_NAME);
+  console.log("IMAGE_MODEL_NAME from env (raw):", process.env.IMAGE_MODEL_NAME);
+  console.log("IMAGE_MODEL_NAME from env (type):", typeof process.env.IMAGE_MODEL_NAME);
   console.log("TEXT_MODEL_NAME from env:", process.env.TEXT_MODEL_NAME);
   console.log("Selected model for image generation:", model);
   console.log("API URL:", apiUrl);
+  
+  // КРИТИЧЕСКАЯ ПРОВЕРКА: если модель содержит qwen и НЕ содержит image, это ошибка
+  if (model.toLowerCase().includes("qwen") && !model.toLowerCase().includes("image")) {
+    const errorMsg = `FATAL ERROR: Wrong model detected! Model="${model}". This is a TEXT model, not an IMAGE generation model. IMAGE_MODEL_NAME env var may be missing or incorrect.`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
 
   if (!apiKey) {
     throw new Error("QWEN_API_KEY is not configured");
