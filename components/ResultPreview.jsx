@@ -11,6 +11,10 @@ function formatAudience(audience) {
 export default function ResultPreview({ draft, loading, celebration = false }) {
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [prevDraft, setPrevDraft] = useState(null);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [imageBase64, setImageBase64] = useState(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [imageError, setImageError] = useState(null);
   const header = draft?.header ?? {};
   const blocks = draft?.blocks ?? {};
 
@@ -117,17 +121,140 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
     }
   }, [buildPassportText]);
 
+  // Извлекаем данные для генерации изображения
+  const getImageGenerationData = useCallback(() => {
+    if (!draft) return null;
+
+    // Визуальный образ из сенсорного блока
+    const sensoryBlock = blocks?.sensory;
+    let visualImage = null;
+    if (Array.isArray(sensoryBlock) && sensoryBlock.length > 0) {
+      const visualRow = sensoryBlock.find((row) => 
+        row?.question?.toLowerCase().includes("визуальный") || 
+        row?.no === "2.1"
+      );
+      if (visualRow?.answer) {
+        visualImage = visualRow.answer;
+      }
+    }
+
+    // Описание упаковки из дополнительных секций
+    let packagingDescription = null;
+    if (draft?.tech && Array.isArray(draft.tech)) {
+      const packagingText = draft.tech.find((text) => 
+        typeof text === "string" && text.toLowerCase().includes("упаковк")
+      );
+      if (packagingText) {
+        packagingDescription = packagingText;
+      }
+    }
+
+    // Ядро бренда из брендингового блока
+    const brandingBlock = blocks?.branding;
+    let brandingCore = null;
+    if (Array.isArray(brandingBlock) && brandingBlock.length > 0) {
+      const coreRow = brandingBlock.find((row) => 
+        row?.question?.toLowerCase().includes("ядро") || 
+        row?.no === "3.3"
+      );
+      if (coreRow?.answer) {
+        brandingCore = coreRow.answer;
+      }
+    }
+
+    return {
+      category: getValue("category"),
+      name: getValue("name"),
+      audience: getValue("audience"),
+      pain: getValue("pain"),
+      innovation: getValue("innovation"),
+      visualImage,
+      packagingDescription,
+      brandingCore
+    };
+  }, [draft, blocks, getValue]);
+
+  const handleGenerateImage = useCallback(async () => {
+    if (!draft) return;
+
+    setIsGeneratingImage(true);
+    setImageError(null);
+    setImageUrl(null);
+    setImageBase64(null);
+
+    try {
+      const imageData = getImageGenerationData();
+      if (!imageData) {
+        throw new Error("Недостаточно данных для генерации изображения");
+      }
+
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(imageData)
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error?.error || `API ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.imageUrl) {
+        setImageUrl(result.imageUrl);
+      } else if (result.imageBase64) {
+        setImageBase64(result.imageBase64);
+      } else {
+        throw new Error("Изображение не было сгенерировано");
+      }
+    } catch (error) {
+      console.error("Image generation error:", error);
+      setImageError(
+        error instanceof Error
+          ? error.message
+          : "Не удалось сгенерировать изображение"
+      );
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  }, [draft, getImageGenerationData]);
+
   return (
     <aside className="flex flex-col gap-4 md:gap-6 lg:sticky lg:top-32">
       <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-6 shadow-inner flex flex-col items-center justify-center text-center gap-4 mb-6">
-        <div className="w-full aspect-video bg-neutral-200/70 rounded-lg flex items-center justify-center text-neutral-500 text-sm md:text-base">
-          Здесь появится изображение упаковки продукта (в разработке)
+        <div className="w-full aspect-video bg-neutral-200/70 rounded-lg flex items-center justify-center text-neutral-500 text-sm md:text-base overflow-hidden relative">
+          {imageUrl || imageBase64 ? (
+            <img
+              src={imageUrl || imageBase64}
+              alt={`Упаковка продукта ${getValue("name")}`}
+              className="w-full h-full object-contain rounded-lg"
+            />
+          ) : isGeneratingImage ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5B5B]"></div>
+              <span className="text-xs">Генерируем изображение...</span>
+            </div>
+          ) : imageError ? (
+            <div className="flex flex-col items-center gap-2 text-red-500">
+              <span className="text-xs">Ошибка: {imageError}</span>
+            </div>
+          ) : (
+            <span>Здесь появится изображение упаковки продукта</span>
+          )}
         </div>
         <button
-          disabled
-          className="px-4 py-2 rounded-full bg-neutral-300 text-neutral-600 text-sm cursor-not-allowed"
+          onClick={handleGenerateImage}
+          disabled={isGeneratingImage || !draft}
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+            isGeneratingImage || !draft
+              ? "bg-neutral-300 text-neutral-600 cursor-not-allowed"
+              : "bg-[#FF5B5B] text-white hover:bg-[#FF7171] shadow-md"
+          }`}
         >
-          Сгенерировать упаковку (скоро)
+          {isGeneratingImage ? "Генерация..." : "Сгенерировать упаковку"}
         </button>
       </div>
 
