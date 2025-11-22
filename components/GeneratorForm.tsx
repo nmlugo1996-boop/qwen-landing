@@ -262,14 +262,21 @@ export default function GeneratorForm({
   }, [audienceAge, audienceGroups]);
   const buildPainsPayload = useCallback(() => {
     return {
-      category: trimmedCategory,
+      category: trimmedCategory || undefined,
       audience: audienceDescription || undefined,
+      pain: form.pain.trim() || undefined,
       uniqueness: form.uniqueness.trim() || undefined,
       tech: undefined,
       wishes: form.comment.trim() || undefined,
       innovation: undefined
     };
-  }, [audienceDescription, form.comment, form.uniqueness, trimmedCategory]);
+  }, [
+    audienceDescription,
+    form.comment,
+    form.pain,
+    form.uniqueness,
+    trimmedCategory
+  ]);
 
   useEffect(() => {
     const ready = Boolean(trimmedCategory) && Boolean(form.pain.trim());
@@ -325,24 +332,22 @@ export default function GeneratorForm({
   );
 
   const handleGeneratePains = useCallback(async () => {
-    if (!trimmedCategory) {
-      showToast("Сначала заполните категорию продукта", "warn");
-      return;
-    }
-
+    setPainsError(null);
+    setIsGeneratingPains(true);
+    setPains([]);
+    setSelectedPains([]);
     try {
-      setIsGeneratingPains(true);
-      setPainsError(null);
+      const payload = buildPainsPayload();
       const response = await fetch("/api/generate-pains", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPainsPayload())
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
       });
-
       if (!response.ok) {
-        throw new Error("Failed to fetch pains");
+        throw new Error(`Request failed with status ${response.status}`);
       }
-
       const data = await response.json();
       if (!data || !Array.isArray(data.pains) || data.pains.length === 0) {
         setPains([]);
@@ -350,77 +355,30 @@ export default function GeneratorForm({
         setPainsError("Сервис не вернул список болей");
         return;
       }
-
       setPains(data.pains);
-      setSelectedPains([]);
+      setSelectedPains(data.pains.slice(0, 3));
     } catch (error) {
-      console.error("generate-pains error", error);
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Не удалось получить список болей";
+      console.error("generate pains error:", error);
       setPains([]);
       setSelectedPains([]);
-      setPainsError(message);
-      showToast(message, "error");
+      setPainsError("Не удалось получить список болей");
     } finally {
       setIsGeneratingPains(false);
     }
-  }, [buildPainsPayload, showToast, trimmedCategory]);
+  }, [buildPainsPayload]);
 
-  const togglePainSelect = useCallback(
+  const handleSelectPain = useCallback(
     (pain: string) => {
+      updateField("pain", pain);
       setSelectedPains((prev) => {
-        const exists = prev.includes(pain);
-        const next = exists ? prev.filter((item) => item !== pain) : [...prev, pain];
-        updateField("pain", next.join("; "));
-        return next;
+        if (prev.includes(pain)) {
+          return prev.filter((p) => p !== pain);
+        }
+        return [...prev, pain];
       });
     },
     [updateField]
   );
-
-  const handleGenerateMorePains = useCallback(async () => {
-    try {
-      setIsGeneratingPains(true);
-      setPainsError(null);
-      const response = await fetch("/api/generate-pains", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPainsPayload())
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch pains");
-      }
-
-      const data = await response.json();
-      const extra = Array.isArray(data.pains) ? data.pains : [];
-      if (!extra.length) {
-        return;
-      }
-
-      setPains((prev) => {
-        const merged = [...prev];
-        extra.forEach((item) => {
-          if (typeof item === "string" && !merged.includes(item)) {
-            merged.push(item);
-          }
-        });
-        return merged;
-      });
-    } catch (error) {
-      console.error("generate-more-pains error", error);
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Не удалось получить список болей";
-      setPainsError(message);
-      showToast(message, "error");
-    } finally {
-      setIsGeneratingPains(false);
-    }
-  }, [buildPainsPayload, showToast]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -691,64 +649,58 @@ export default function GeneratorForm({
           onChange={(event) => updateField("pain", event.target.value)}
         />
 
-        {painsError && (
-          <div className="text-xs text-red-500 mt-1">
-            {painsError}
-          </div>
-        )}
-
-        <div
-          id="painBlock"
-          className="mt-3 rounded-2xl border border-white/50 bg-white/70 p-4 shadow-sm backdrop-blur-sm"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-neutral-700">
-              Сгенерированные боли
-            </p>
-          </div>
-
+        {/* Скелетон / ошибки / список болей под полем "Потребительская боль" */}
+        <div className="mt-2">
           {isGeneratingPains && pains.length === 0 && (
-            <div className="flex flex-col gap-2 mt-2">
-              <span className="h-2.5 rounded-full bg-neutral-200 opacity-70 animate-pulse" />
-              <span className="h-2.5 rounded-full bg-neutral-200 opacity-70 animate-pulse" />
-              <span className="h-2.5 rounded-full bg-neutral-200 opacity-70 animate-pulse" />
+            <div className="flex flex-col gap-2 mt-1">
+              <span className="h-2.5 rounded-full bg-gradient-to-r from-[#FF5B5B]/20 via-[#FF7B5B]/30 to-[#FF5B5B]/20 animate-pulse" />
+              <span className="h-2.5 rounded-full bg-gradient-to-r from-[#FF5B5B]/15 via-[#FF7B5B]/25 to-[#FF5B5B]/15 animate-pulse delay-100" />
+              <span className="h-2.5 rounded-full bg-gradient-to-r from-[#FF5B5B]/10 via-[#FF7B5B]/20 to-[#FF5B5B]/10 animate-pulse delay-200" />
             </div>
           )}
-
-          {pains.length > 0 && (
-            <div className="mt-3 flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
-              {pains.map((item, idx) => {
-                const isSelected = selectedPains.includes(item);
-                return (
-                  <label
-                    key={`${idx}-${item.slice(0, 12)}`}
-                    className={`p-3 rounded-xl border cursor-pointer transition-all duration-300 ease-out transform hover:-translate-y-0.5 animate-fadeIn ${
-                      isSelected
-                        ? "border-red-400 bg-red-50 shadow-sm"
-                        : "border-neutral-200 bg-white hover:bg-neutral-100"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="mr-2 accent-[#ff4d4f]"
-                      checked={isSelected}
-                      onChange={() => togglePainSelect(item)}
-                    />
-                    {item}
-                  </label>
-                );
-              })}
-            </div>
+          {painsError && (
+            <p className="mt-2 text-xs text-red-500">
+              {painsError}
+            </p>
           )}
-
-          {pains.length > 0 && (
-            <button
-              type="button"
-              className="text-sm text-red-600 underline hover:text-red-800 transition mt-2"
-              onClick={handleGenerateMorePains}
-            >
-              Сгенерировать ещё 10 вариантов
-            </button>
+          {(pains.length > 0 || selectedPains.length > 0) && (
+            <div className="mt-3 p-3 rounded-2xl bg-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <p className="text-sm font-semibold text-neutral-800">
+                  Сгенерированные боли
+                </p>
+                {isGeneratingPains && (
+                  <span className="text-[11px] text-neutral-500">
+                    Обновляем список…
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
+                {pains.map((item, idx) => {
+                  const isActive = selectedPains.includes(item);
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectPain(item)}
+                      className={[
+                        "w-full text-left text-[13px] leading-snug rounded-xl px-3 py-2 transition",
+                        isActive
+                          ? "bg-gradient-to-r from-[#FF5B5B] to-[#FF7B5B] text-white shadow-[0_8px_18px_rgba(255,91,91,0.35)]"
+                          : "bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
+                      ].join(" ")}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedPains.length > 0 && (
+                <p className="mt-2 text-[11px] text-neutral-500">
+                  Нажми на боль, чтобы подставить её в поле и включить в паспорт.
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
