@@ -5,6 +5,93 @@ import type { FormEvent } from "react";
 
 const CUSTOM_CATEGORY_OPTION = "Свой вариант…";
 
+const painsByAge = {
+  "2–7": [
+    "Ребёнок боится новой еды и отказывается пробовать неизвестные продукты",
+    "Родителям сложно найти полезный перекус без сахара и вредных добавок",
+    "Малыши едят только сладкое и игнорируют полезную еду",
+    "Еда должна быть «весёлой» или в форме персонажа, иначе ребёнок её не хочет",
+    "Родители устают убеждать ребёнка поесть",
+    "Ребёнок отвлекается и долго не ест без давления",
+    "Слишком твёрдые продукты вызывают дискомфорт при жевании",
+    "Дети боятся непривычной текстуры и запаха",
+    "Родители переживают за аллергенность продуктов",
+    "Еда быстро надоедает — нужен элемент игры"
+  ],
+  "8–18": [
+    "Подростки выбирают вредные снеки вместо полезной еды",
+    "Родители не доверяют составу готовой продукции",
+    "Сложно подобрать перекус, который и полезный, и вкусный",
+    "Подростку важно, чтобы еда выглядела «не по-детски»",
+    "Школьники не хотят носить еду из дома — стесняются упаковки",
+    "Сложно контролировать рацион в школе",
+    "Подростки часто пропускают приёмы пищи",
+    "Сильная зависимость от вкуса — если не идеально вкусно, просто не едят",
+    "Подростки реагируют на моду и тренды в питании",
+    "Высокий расход энергии — нужен питательный перекус"
+  ],
+  "18–25": [
+    "Молодёжь выбирает быстрые вредные перекусы из-за нехватки времени",
+    "Сложно найти полезную еду, которую удобно брать с собой",
+    "Высокая чувствительность к цене",
+    "Нужно что-то «модное», чтобы не стыдно было показывать",
+    "Усталость и стресс провоцируют тягу к сладкому",
+    "Нет привычки к здоровому питанию",
+    "Низкий энергетический уровень при плохом рационе",
+    "Перекусы заменяют полноценную еду",
+    "Сложно контролировать баланс БЖУ",
+    "Важно, чтобы продукт был «clean label» — понятный состав"
+  ],
+  "26–45": [
+    "Постоянный дефицит времени: работа, семья, заботы",
+    "Нужно правильное питание, но «надо быстро»",
+    "Тревога за здоровье детей делает родителей требовательными к составу",
+    "Сложно найти вкусное и полезное одновременно",
+    "Люди устают постоянно готовить",
+    "Перекусы часто заменяют обед",
+    "Возрастные изменения требуют более здорового рациона",
+    "Аллергии и непереносимости встречаются чаще",
+    "Хочется меньше сахара — но не хочется жертвовать вкусом",
+    "Важно, чтобы еда давала энергию, а не сонливость"
+  ],
+  "46–60": [
+    "Проблемы с пищеварением требуют мягких и натуральных продуктов",
+    "Снижение энергии — нужна еда, которая реально заряжает",
+    "Рост чувствительности к сахару, соли и жирности",
+    "Сложно найти вкусную, но здоровую альтернативу привычной еде",
+    "Появляется страх покупать продукты с непонятным составом",
+    "Важна польза для сердца, сосудов, ЖКТ",
+    "Не хочется тратить много времени на готовку",
+    "Возрастная смена вкусов — хочется более мягких и деликатных рецептов",
+    "Не хочется переплачивать за бренд",
+    "Хочется натуральное и «как дома»"
+  ],
+  "60+": [
+    "Сложности с жеванием делают многие продукты недоступными",
+    "Снижается аппетит — нужна еда, которая стимулирует желание поесть",
+    "Риски аллергии становятся выше",
+    "Важно поддерживать иммунитет и энергию",
+    "Пищеварение становится чувствительным к грубой пище",
+    "Людям тяжело понимать сложные составы",
+    "Нужна еда, которую легко открывать и есть",
+    "Сладкое хочется, но сахар нельзя",
+    "Хочется простых, понятных вкусов",
+    "Ограниченный бюджет"
+  ],
+  "80+": [
+    "Очень низкий аппетит",
+    "Сложности с жеванием и проглатыванием",
+    "Нужна еда мягкая, кремовая, безопасная",
+    "Организм сложно переваривает жирное и тяжёлое",
+    "Нужна еда, которую можно есть понемногу",
+    "Важна высокая питательность при маленьких порциях",
+    "Сложно открывать упаковку",
+    "Страх подавиться твёрдой едой",
+    "Хочется мягких, тёплых, простых вкусов",
+    "Нужно минимум ингредиентов — без химии"
+  ]
+};
+
 type DiagnosticAnswer = "yes" | "no" | null;
 
 const DIAGNOSTIC_SECTIONS = [
@@ -210,8 +297,6 @@ export default function GeneratorForm({
 
   const [pains, setPains] = useState<string[]>([]);
   const [selectedPains, setSelectedPains] = useState<string[]>([]);
-  const [isGeneratingPains, setIsGeneratingPains] = useState(false);
-  const [painsError, setPainsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!initialDraft) return;
@@ -260,23 +345,6 @@ export default function GeneratorForm({
     const segments = [...audienceAge, ...audienceGroups];
     return segments.length ? segments.join(", ") : "";
   }, [audienceAge, audienceGroups]);
-  const buildPainsPayload = useCallback(() => {
-    return {
-      category: trimmedCategory || undefined,
-      audience: audienceDescription || undefined,
-      pain: form.pain.trim() || undefined,
-      uniqueness: form.uniqueness.trim() || undefined,
-      tech: undefined,
-      wishes: form.comment.trim() || undefined,
-      innovation: undefined
-    };
-  }, [
-    audienceDescription,
-    form.comment,
-    form.pain,
-    form.uniqueness,
-    trimmedCategory
-  ]);
 
   useEffect(() => {
     const ready = Boolean(trimmedCategory) && Boolean(form.pain.trim());
@@ -331,41 +399,21 @@ export default function GeneratorForm({
     []
   );
 
-  const handleGeneratePains = useCallback(async () => {
-    setPainsError(null);
-    setIsGeneratingPains(true);
-    setPains([]);
-    setSelectedPains([]);
-    try {
-      const payload = buildPainsPayload();
-      const response = await fetch("/api/generate-pains", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-      const data = await response.json();
-      if (!data || !Array.isArray(data.pains) || data.pains.length === 0) {
-        setPains([]);
-        setSelectedPains([]);
-        setPainsError("Сервис не вернул список болей");
-        return;
-      }
-      setPains(data.pains);
-      setSelectedPains(data.pains.slice(0, 3));
-    } catch (error) {
-      console.error("generate pains error:", error);
+  const handleGeneratePains = useCallback(() => {
+    const selectedAge = audienceAge.length > 0 ? audienceAge[0] : null;
+    
+    if (!selectedAge) {
       setPains([]);
       setSelectedPains([]);
-      setPainsError("Не удалось получить список болей");
-    } finally {
-      setIsGeneratingPains(false);
+      return;
     }
-  }, [buildPainsPayload]);
+
+    const ageKey = selectedAge.replace(/\sлет$/u, "");
+    const painsForAge = painsByAge[ageKey as keyof typeof painsByAge] || [];
+    
+    setPains(painsForAge);
+    setSelectedPains([]);
+  }, [audienceAge]);
 
   const handleSelectPain = useCallback(
     (pain: string) => {
@@ -633,12 +681,9 @@ export default function GeneratorForm({
           <button
             type="button"
             onClick={handleGeneratePains}
-            disabled={isGeneratingPains}
-            className={`inline-flex items-center justify-center px-5 py-2 rounded-full text-sm font-semibold text-white shadow-md transition ${
-              isGeneratingPains ? "bg-red-300 cursor-wait" : "bg-red-500 hover:bg-red-600"
-            }`}
+            className="inline-flex items-center justify-center px-5 py-2 rounded-full text-sm font-semibold text-white shadow-md transition bg-red-500 hover:bg-red-600"
           >
-            {isGeneratingPains ? "Генерация..." : "Показать боли"}
+            Показать боли
           </button>
         </div>
 
@@ -649,57 +694,33 @@ export default function GeneratorForm({
           onChange={(event) => updateField("pain", event.target.value)}
         />
 
-        {/* Скелетон / ошибки / список болей под полем "Потребительская боль" */}
-        <div className="mt-2">
-          {isGeneratingPains && pains.length === 0 && (
-            <div className="flex flex-col gap-2 mt-1">
-              <span className="h-2.5 rounded-full bg-gradient-to-r from-[#FF5B5B]/20 via-[#FF7B5B]/30 to-[#FF5B5B]/20 animate-pulse" />
-              <span className="h-2.5 rounded-full bg-gradient-to-r from-[#FF5B5B]/15 via-[#FF7B5B]/25 to-[#FF5B5B]/15 animate-pulse delay-100" />
-              <span className="h-2.5 rounded-full bg-gradient-to-r from-[#FF5B5B]/10 via-[#FF7B5B]/20 to-[#FF5B5B]/10 animate-pulse delay-200" />
-            </div>
-          )}
-          {painsError && (
-            <p className="mt-2 text-xs text-red-500">
-              {painsError}
+        {/* Постоянный блок "Сгенерированные боли" */}
+        <div className="mt-4 p-4 bg-white rounded-xl shadow-sm border">
+          <h3 className="text-sm font-semibold mb-2">Сгенерированные боли</h3>
+          {pains.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              Выберите возраст и нажмите «Показать боли»
             </p>
-          )}
-          {(pains.length > 0 || selectedPains.length > 0) && (
-            <div className="mt-3 p-3 rounded-2xl bg-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <p className="text-sm font-semibold text-neutral-800">
-                  Сгенерированные боли
-                </p>
-                {isGeneratingPains && (
-                  <span className="text-[11px] text-neutral-500">
-                    Обновляем список…
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
-                {pains.map((item, idx) => {
-                  const isActive = selectedPains.includes(item);
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleSelectPain(item)}
-                      className={[
-                        "w-full text-left text-[13px] leading-snug rounded-xl px-3 py-2 transition",
-                        isActive
-                          ? "bg-gradient-to-r from-[#FF5B5B] to-[#FF7B5B] text-white shadow-[0_8px_18px_rgba(255,91,91,0.35)]"
-                          : "bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
-                      ].join(" ")}
-                    >
-                      {item}
-                    </button>
-                  );
-                })}
-              </div>
-              {selectedPains.length > 0 && (
-                <p className="mt-2 text-[11px] text-neutral-500">
-                  Нажми на боль, чтобы подставить её в поле и включить в паспорт.
-                </p>
-              )}
+          ) : (
+            <div className="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
+              {pains.map((item, idx) => {
+                const isActive = selectedPains.includes(item);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectPain(item)}
+                    className={[
+                      "w-full text-left text-[13px] leading-snug rounded-xl px-3 py-2 transition",
+                      isActive
+                        ? "bg-gradient-to-r from-[#FF5B5B] to-[#FF7B5B] text-white shadow-[0_8px_18px_rgba(255,91,91,0.35)]"
+                        : "bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
+                    ].join(" ")}
+                  >
+                    {item}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
