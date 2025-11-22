@@ -366,6 +366,13 @@ export default function GeneratorForm({
     showToast
   ]);
 
+  const handleSelectPain = useCallback(
+    (pain: string) => {
+      updateField("pain", pain);
+    },
+    [updateField]
+  );
+
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -643,25 +650,21 @@ export default function GeneratorForm({
           </p>
         )}
 
-        {/* Список сгенерированных болей */}
         {pains.length > 0 && (
-          <div className="mt-1 flex flex-col gap-2 border-t border-neutral-200/80 pt-3">
-            <p className="text-xs md:text-sm font-medium text-neutral-700">
-              Выберите одну из болей ниже — она подставится в поле выше:
-            </p>
-            <ul className="flex flex-col gap-1.5">
-              {pains.map((painOption, index) => (
-                <li key={index}>
-                  <button
-                    type="button"
-                    onClick={() => updateField("pain", painOption)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white/90 px-3 py-2 text-left text-xs md:text-sm text-neutral-800 transition hover:border-[#ff4d4f] hover:bg-[#fff4f4]"
-                  >
-                    {painOption}
-                  </button>
-                </li>
+          <div className="mt-3 p-3 border rounded-lg bg-white shadow-sm">
+            <p className="text-sm font-semibold mb-2">Предложенные боли:</p>
+            <div className="flex flex-col gap-2">
+              {pains.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectPain(item)}
+                  className="text-left p-2 bg-gray-100 rounded hover:bg-gray-200 transition"
+                  type="button"
+                >
+                  {item}
+                </button>
               ))}
-            </ul>
+            </div>
           </div>
         )}
       </div>
