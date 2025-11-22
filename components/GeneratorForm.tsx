@@ -457,6 +457,7 @@ export default function GeneratorForm({
             pain: painValue,
             comment: form.comment.trim() || undefined,
             name: form.name.trim() || undefined,
+            uniqueness: form.uniqueness.trim() || undefined,
             temperature: Number(form.temperature),
             diagnostics: form.diagnostics,
             projectId: projectId || undefined
@@ -671,11 +672,8 @@ export default function GeneratorForm({
       <div className="bg-white/90 rounded-3xl p-6 shadow-sm flex flex-col gap-3">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-900">
+            <div className="text-base md:text-lg font-semibold uppercase tracking-[0.2em] text-neutral-900">
               ПОТРЕБИТЕЛЬСКАЯ БОЛЬ
-            </div>
-            <div className="text-xs text-gray-500">
-              Можно ввести свою формулировку или сгенерировать варианты на основе данных выше.
             </div>
           </div>
           <button
@@ -683,13 +681,13 @@ export default function GeneratorForm({
             onClick={handleGeneratePains}
             className="inline-flex items-center justify-center px-5 py-2 rounded-full text-sm font-semibold text-white shadow-md transition bg-red-500 hover:bg-red-600"
           >
-            Показать боли
+            Показать примеры боли
           </button>
         </div>
 
         <textarea
           className="mt-2 w-full min-h-[120px] rounded-2xl border border-gray-200 bg-white/80 px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 transition"
-          placeholder="Опишите боль своего потребителя, если вы её знаете или выберите один из вариантов ниже."
+          placeholder="Опишите боль своего потребителя или если не знаете как формулировать боль, нажмите кнопку Показать примеры боли и формулируйте опираясь на примеры."
           value={form.pain}
           onChange={(event) => updateField("pain", event.target.value)}
         />

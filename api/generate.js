@@ -23,6 +23,7 @@ const SYSTEM_PROMPT = [
   "Структура ответа: { \"header\": {\"category\": \"\", \"name\": \"\", \"audience\": \"\", \"pain\": \"\", \"innovation\": \"\"}, \"blocks\": {\"cognitive\": [...5 объектов...], \"sensory\": [...5 объектов...], \"branding\": [...5 объектов...], \"marketing\": [...5 объектов...]}, \"tech\": [\"...\"], \"star\": [\"...\"], \"conclusion\": \"\" }.",
   "Каждый массив блоков обязан содержать ровно пять объектов с полями \"no\", \"question\", \"answer\".",
   "Ни один ответ не может быть пустым, нейтральным или заглушкой.",
+  "ВАЖНО: Обязательно учитывай все комментарии и пожелания пользователя, указанные во вводных данных. Они содержат важную информацию о том, что именно хочет получить пользователь.",
   "Форма вопросов и строгий порядок заполнения:",
   FORM_REFERENCE,
   "Методические правила качества:",
@@ -303,6 +304,12 @@ function normalizeInput(body) {
     sanitizeText(source.uniqueness)
   );
 
+  const comment = sanitizeText(source.comment);
+
+  const diagnostics = source.diagnostics && typeof source.diagnostics === "object"
+    ? source.diagnostics
+    : {};
+
   const tempCandidate = typeof source.temperature === "number"
     ? source.temperature
     : typeof body.temperature === "number"
@@ -316,12 +323,14 @@ function normalizeInput(body) {
     audienceList,
     pain,
     innovation,
+    comment,
+    diagnostics,
     temperature: clamp(Number.isFinite(tempCandidate) ? tempCandidate : 0.7, 0, 1)
   };
 }
 
 function buildUserMessage(input) {
-  return [
+  const parts = [
     "Вводные:",
     `Категория: ${input.category || "-"}`,
     input.name ? `Предпочитаемое название: ${input.name}` : "Название: придумай убедительное рабочее имя",
@@ -329,7 +338,23 @@ function buildUserMessage(input) {
     `Потребительская боль: ${input.pain || "-"}`,
     `Уникальность: ${input.innovation || "-"}`,
     `Температура (креативность): ${input.temperature}`
-  ].join("\n");
+  ];
+
+  if (input.comment && input.comment.trim()) {
+    parts.push(`Комментарии и пожелания пользователя: ${input.comment}`);
+  }
+
+  if (input.diagnostics && typeof input.diagnostics === "object") {
+    const selectedDiagnostics = Object.entries(input.diagnostics)
+      .filter(([_, value]) => value === "yes")
+      .map(([key]) => key);
+    
+    if (selectedDiagnostics.length > 0) {
+      parts.push(`Важные секции для детальной проработки (пользователь отметил как важные): ${selectedDiagnostics.join(", ")}`);
+    }
+  }
+
+  return parts.join("\n");
 }
 
 function extractBlock(rawDraft, key) {
