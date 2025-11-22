@@ -91,6 +91,7 @@ type FormState = {
   categoryCustom: string;
   name: string;
   comment: string;
+  uniqueness: string;
   temperature: number;
   pain: string;
   audience: AudienceSets;
@@ -146,6 +147,7 @@ const createInitialForm = (): FormState => ({
   categoryCustom: "",
   name: "",
   comment: "",
+  uniqueness: "",
   temperature: 0.7,
   pain: "",
   audience: {
@@ -206,8 +208,9 @@ export default function GeneratorForm({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFormReady, setIsFormReady] = useState(false);
 
-  const [painSuggestions, setPainSuggestions] = useState<string[]>([]);
+  const [pains, setPains] = useState<string[]>([]);
   const [isGeneratingPains, setIsGeneratingPains] = useState(false);
+  const [painsError, setPainsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!initialDraft) return;
@@ -215,6 +218,9 @@ export default function GeneratorForm({
     const category = header?.category ?? "";
     const preparedCategory = category;
     const audience = parseAudience(header.audience);
+    const rawUniqueness = initialDraft?.uniqueness;
+    const uniqueness =
+      typeof rawUniqueness === "string" ? rawUniqueness : header?.unique ?? "";
     const comment =
       typeof initialDraft?.comment === "string"
         ? initialDraft.comment
@@ -231,6 +237,7 @@ export default function GeneratorForm({
       categoryCustom: "",
       name: header?.name ?? "",
       comment,
+      uniqueness,
       temperature,
       pain: header?.pain ?? "",
       audience,
@@ -303,58 +310,60 @@ export default function GeneratorForm({
   );
 
   const handleGeneratePains = useCallback(async () => {
-    const categoryValue = trimmedCategory;
-
-    if (!categoryValue) {
-      showToast("Сначала заполните категорию продукта", "warn");
-      return;
-    }
-
-    setIsGeneratingPains(true);
-    setPainSuggestions([]);
-
     try {
+      setIsGeneratingPains(true);
+      setPainsError(null);
       const response = await fetch("/api/generate-pains", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          category: categoryValue,
-          audience: [...audienceAge, ...audienceGroups],
-          name: form.name.trim() || undefined,
+          category: trimmedCategory,
+          pain: form.pain.trim() || undefined,
           comment: form.comment.trim() || undefined,
-          painDraft: form.pain.trim() || undefined
+          uniqueness: form.uniqueness.trim() || undefined,
+          audienceAge,
+          audienceGroups,
+          temperature: form.temperature
         })
       });
-
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error?.error || `API ${response.status}`);
+        throw new Error(`API error ${response.status}`);
       }
-
-      const data = await response.json();
-      if (!data || !Array.isArray(data.pains) || !data.pains.length) {
-        throw new Error("Не удалось получить список болей");
+      const data = (await response.json()) as any;
+      const list = Array.isArray(data.pains)
+        ? data.pains
+        : Array.isArray(data.variants)
+        ? data.variants
+        : typeof data.text === "string"
+        ? data.text
+            .split("\n")
+            .map((s: string) => s.replace(/^[-•\d\.\s]+/, "").trim())
+            .filter(Boolean)
+        : [];
+      if (!list.length) {
+        throw new Error("Сервис не вернул список болей");
       }
-
-      setPainSuggestions(data.pains);
-      showToast("Список болей сгенерирован. Выберите подходящую.", "ok");
+      setPains(list);
     } catch (error) {
-      console.error(error);
+      console.error("generate-pains error", error);
       const message =
         error instanceof Error
           ? error.message
-          : "Ошибка при генерации списка болей";
+          : "Не удалось получить список болей";
+      setPainsError(message);
       showToast(message, "error");
     } finally {
       setIsGeneratingPains(false);
     }
   }, [
-    trimmedCategory,
     audienceAge,
     audienceGroups,
-    form.name,
     form.comment,
-    form.pain
+    form.pain,
+    form.temperature,
+    form.uniqueness,
+    trimmedCategory,
+    showToast
   ]);
 
   const handleSubmit = useCallback(
@@ -597,58 +606,62 @@ export default function GeneratorForm({
         </div>
       </div>
 
-      {/* Потребительская боль + генерация болей */}
       <div className="flex flex-col gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <label
-              className="text-base md:text-lg font-semibold text-neutral-800"
-              htmlFor="pain"
-            >
-              Потребительская боль
-            </label>
+        {/* Заголовок + кнопка */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
+              ПОТРЕБИТЕЛЬСКАЯ БОЛЬ
+            </span>
+            <p className="text-xs text-neutral-500">
+              Можно ввести свою формулировку или сгенерировать варианты на основе данных выше.
+            </p>
           </div>
-
           <button
             type="button"
             onClick={handleGeneratePains}
             disabled={isGeneratingPains}
-            className="inline-flex items-center rounded-full bg-[#ff5b5b] px-4 py-2 text-xs md:text-sm font-semibold text-white shadow-sm transition hover:bg-[#ff7171] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center rounded-full bg-[#ff4d4f] px-4 py-1.5 text-xs md:text-sm font-semibold text-white shadow-[0_10px_25px_rgba(255,77,79,0.45)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(255,77,79,0.55)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isGeneratingPains ? "Генерация…" : "ПОКАЗАТЬ БОЛИ"}
+            {isGeneratingPains ? "Генерируем…" : "Показать боли"}
           </button>
         </div>
 
+        {/* Поле для выбранной/своей боли */}
         <textarea
-          id="pain"
-          className="w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-base text-neutral-700 shadow-inner transition-all duration-300 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#ff4d4f]/30"
-          rows={4}
-          placeholder={`Если не знаете или не можете сформулировать боль, нажмите кнопку "Показать боли", и выберите боль из списка ниже, либо попытайтесь сформулировать свой вариант боли.`}
+          className="min-h-[90px] rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-base text-neutral-800 shadow-sm outline-none transition placeholder:text-neutral-400 focus:border-[#ff4d4f] focus:outline-none focus:ring-2 focus:ring-[#ff4d4f]/30"
+          rows={3}
+          placeholder="Опишите боль своего потребителя, если вы её знаете или выберите один из вариантов ниже."
           value={form.pain}
           onChange={(event) => updateField("pain", event.target.value)}
         />
 
-        {painSuggestions.length > 0 && (
-          <div className="mt-2 space-y-2">
-            <p className="text-xs text-neutral-500">
-              Нажмите на подходящую боль — она подставится в поле выше:
+        {/* Ошибка, если API упало */}
+        {painsError && (
+          <p className="text-xs text-red-500">
+            {painsError}
+          </p>
+        )}
+
+        {/* Список сгенерированных болей */}
+        {pains.length > 0 && (
+          <div className="mt-1 flex flex-col gap-2 border-t border-neutral-200/80 pt-3">
+            <p className="text-xs md:text-sm font-medium text-neutral-700">
+              Выберите одну из болей ниже — она подставится в поле выше:
             </p>
-            <div className="flex flex-col gap-1.5">
-              {painSuggestions.map((pain, index) => (
-                <button
-                  key={`${index}-${pain.slice(0, 12)}`}
-                  type="button"
-                  onClick={() => {
-                    updateField("pain", pain);
-                    setPainSuggestions([]);
-                    showToast("Боль подставлена в поле", "ok");
-                  }}
-                  className="w-full text-left rounded-2xl border border-neutral-200 bg-white/80 px-3 py-2 text-xs md:text-sm text-neutral-700 transition-all duration-200 hover:border-[#ff4d4f]/60 hover:bg-[#ffecec]"
-                >
-                  {pain}
-                </button>
+            <ul className="flex flex-col gap-1.5">
+              {pains.map((painOption, index) => (
+                <li key={index}>
+                  <button
+                    type="button"
+                    onClick={() => updateField("pain", painOption)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white/90 px-3 py-2 text-left text-xs md:text-sm text-neutral-800 transition hover:border-[#ff4d4f] hover:bg-[#fff4f4]"
+                  >
+                    {painOption}
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
       </div>
