@@ -19,32 +19,47 @@ async function callGeminiImageGeneration(prompt) {
     process.env.QWEN_API_URL || "https://openrouter.ai/api/v1/chat/completions";
   const apiKey = process.env.QWEN_API_KEY;
   
-  // Явно проверяем и используем IMAGE_MODEL_NAME
+  // КРИТИЧЕСКИ ВАЖНО: используем ТОЛЬКО IMAGE_MODEL_NAME, НИКОГДА не TEXT_MODEL_NAME
   let model = process.env.IMAGE_MODEL_NAME;
   
-  // Если переменная не установлена или пустая, используем дефолт
-  if (!model || model.trim() === "") {
-    console.warn("IMAGE_MODEL_NAME not set, using default");
-    model = "google/gemini-2.5-flash-image";
-  }
-  
-  // Убираем пробелы и проверяем, что это не текстовая модель
-  model = model.trim();
-  
-  // Логируем, какая модель используется
+  // Логируем все переменные окружения для отладки
   console.log("=== IMAGE GENERATION DEBUG ===");
   console.log("IMAGE_MODEL_NAME from env (raw):", process.env.IMAGE_MODEL_NAME);
   console.log("IMAGE_MODEL_NAME from env (type):", typeof process.env.IMAGE_MODEL_NAME);
   console.log("TEXT_MODEL_NAME from env:", process.env.TEXT_MODEL_NAME);
-  console.log("Selected model for image generation:", model);
   console.log("API URL:", apiUrl);
   
-  // КРИТИЧЕСКАЯ ПРОВЕРКА: если модель содержит qwen и НЕ содержит image, это ошибка
-  if (model.toLowerCase().includes("qwen") && !model.toLowerCase().includes("image")) {
-    const errorMsg = `FATAL ERROR: Wrong model detected! Model="${model}". This is a TEXT model, not an IMAGE generation model. IMAGE_MODEL_NAME env var may be missing or incorrect.`;
+  // Если переменная не установлена или пустая, используем дефолт Gemini
+  if (!model || model.trim() === "") {
+    console.warn("⚠️ IMAGE_MODEL_NAME not set in Vercel! Using default Gemini model.");
+    model = "google/gemini-2.5-flash-image";
+  }
+  
+  // Убираем пробелы
+  model = model.trim();
+  
+  // КРИТИЧЕСКАЯ ПРОВЕРКА 1: НИКОГДА не используем TEXT_MODEL_NAME
+  if (model === process.env.TEXT_MODEL_NAME) {
+    const errorMsg = `FATAL ERROR: IMAGE_MODEL_NAME equals TEXT_MODEL_NAME! This means IMAGE_MODEL_NAME is not set in Vercel. Please set IMAGE_MODEL_NAME=google/gemini-2.5-flash-image in Vercel environment variables.`;
     console.error(errorMsg);
     throw new Error(errorMsg);
   }
+  
+  // КРИТИЧЕСКАЯ ПРОВЕРКА 2: если модель содержит qwen и НЕ содержит image, это ошибка
+  if (model.toLowerCase().includes("qwen") && !model.toLowerCase().includes("image")) {
+    const errorMsg = `FATAL ERROR: Wrong model detected! Model="${model}". This is a TEXT model (Qwen), not an IMAGE generation model. IMAGE_MODEL_NAME env var must be set to "google/gemini-2.5-flash-image" in Vercel.`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+  
+  // КРИТИЧЕСКАЯ ПРОВЕРКА 3: модель должна быть Gemini для генерации изображений
+  if (!model.toLowerCase().includes("gemini") && !model.toLowerCase().includes("image")) {
+    const errorMsg = `FATAL ERROR: Model "${model}" is not a Gemini image generation model. IMAGE_MODEL_NAME must be set to "google/gemini-2.5-flash-image" in Vercel.`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+  
+  console.log("✅ Selected model for image generation:", model);
 
   if (!apiKey) {
     throw new Error("QWEN_API_KEY is not configured");
@@ -77,17 +92,23 @@ async function callGeminiImageGeneration(prompt) {
 
   console.log("Request body model:", body.model);
   console.log("Request body (without messages):", { model: body.model, temperature: body.temperature });
+  console.log("Full request body (for debugging):", JSON.stringify(body, null, 2));
 
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json"
   };
 
+  console.log("🚀 Sending request to OpenRouter with model:", body.model);
+  console.log("Request URL:", apiUrl);
+
   const response = await fetch(apiUrl, {
     method: "POST",
     headers,
     body: JSON.stringify(body)
   });
+  
+  console.log("Response status:", response.status);
 
   if (!response.ok) {
     const errorText = await response.text();
