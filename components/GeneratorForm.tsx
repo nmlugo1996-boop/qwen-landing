@@ -672,7 +672,7 @@ export default function GeneratorForm({
       <div className="bg-white/90 rounded-3xl p-6 shadow-sm flex flex-col gap-3">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="text-base md:text-lg font-semibold uppercase tracking-[0.2em] text-neutral-900">
+            <div className="text-base md:text-lg font-semibold uppercase tracking-wide text-neutral-900 whitespace-nowrap">
               ПОТРЕБИТЕЛЬСКАЯ БОЛЬ
             </div>
           </div>
@@ -687,14 +687,14 @@ export default function GeneratorForm({
 
         <textarea
           className="mt-2 w-full min-h-[120px] rounded-2xl border border-gray-200 bg-white/80 px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 transition"
-          placeholder="Опишите боль своего потребителя или если не знаете как формулировать боль, нажмите кнопку Показать примеры боли и формулируйте опираясь на примеры."
+          placeholder="Опишите боль своего потребителя или, если не знаете, как формулировать боль, нажмите кнопку «Показать примеры боли» и формулируйте, опираясь на примеры."
           value={form.pain}
           onChange={(event) => updateField("pain", event.target.value)}
         />
 
         {/* Постоянный блок "Сгенерированные боли" */}
         <div className="mt-4 p-4 bg-white rounded-xl shadow-sm border">
-          <h3 className="text-sm font-semibold mb-2">Сгенерированные боли</h3>
+          <h3 className="text-sm font-semibold mb-2">Примеры боли</h3>
           {pains.length === 0 ? (
             <p className="text-sm text-gray-400">
               Выберите возраст и нажмите «Показать боли»
