@@ -21,12 +21,25 @@ async function callGeminiImageGeneration(prompt) {
   const model =
     process.env.IMAGE_MODEL_NAME || "google/gemini-2.5-flash-image";
 
+  // Логируем, какая модель используется
+  console.log("=== IMAGE GENERATION DEBUG ===");
+  console.log("IMAGE_MODEL_NAME from env:", process.env.IMAGE_MODEL_NAME);
+  console.log("TEXT_MODEL_NAME from env:", process.env.TEXT_MODEL_NAME);
+  console.log("Selected model for image generation:", model);
+  console.log("API URL:", apiUrl);
+
   if (!apiKey) {
     throw new Error("QWEN_API_KEY is not configured");
   }
 
   if (!model) {
     throw new Error("IMAGE_MODEL_NAME is not configured");
+  }
+
+  // Проверяем, что не используется текстовая модель по ошибке
+  if (model.includes("qwen") && !model.includes("image")) {
+    console.error("WARNING: Using text model for image generation! Model:", model);
+    throw new Error(`Wrong model selected: ${model}. Should be an image generation model like google/gemini-2.5-flash-image`);
   }
 
   const messages = [
@@ -43,6 +56,9 @@ async function callGeminiImageGeneration(prompt) {
     // Для моделей генерации изображений не нужен response_format: json_object
     // Они возвращают изображения в специальном формате
   };
+
+  console.log("Request body model:", body.model);
+  console.log("Request body (without messages):", { model: body.model, temperature: body.temperature });
 
   const headers = {
     Authorization: `Bearer ${apiKey}`,
