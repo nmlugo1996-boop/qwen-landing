@@ -3,7 +3,7 @@ import Header from "../components/Header";
 
 export const metadata = {
   title: "Генератор уникальных Мясных продуктов",
-  description: "По методике Когнитивно-Сенсорного Маркетинга ("Полярная звезда")"
+  description: "По методике Когнитивно-Сенсорного Маркетинга (\"Полярная звезда\")"
 };
 
 export const viewport = {
