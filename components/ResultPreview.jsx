@@ -205,6 +205,14 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
 
       console.log("Image generation result:", result);
       console.log("Full API response:", JSON.stringify(result, null, 2));
+      
+      // Показываем информацию о модели, если она есть
+      if (result.debug?.modelUsed) {
+        console.log("✅ Модель, использованная для генерации:", result.debug.modelUsed);
+        if (result.debug.modelUsed.toLowerCase().includes("qwen") && !result.debug.modelUsed.toLowerCase().includes("image")) {
+          console.error("❌ ОШИБКА: Используется текстовая модель Qwen вместо модели генерации изображений!");
+        }
+      }
 
       if (result.success && result.imageUrl) {
         setImageUrl(result.imageUrl);
@@ -218,15 +226,20 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
         
         if (result.debug) {
           errorMsg += `\n\nОтладочная информация:\n`;
-          errorMsg += `- Есть choices: ${result.debug.hasChoices}\n`;
-          errorMsg += `- Количество choices: ${result.debug.choicesLength}\n`;
-          if (result.debug.firstChoiceContent !== "N/A") {
-            errorMsg += `- Первые 200 символов ответа: ${result.debug.firstChoiceContent.substring(0, 200)}...`;
+          if (result.debug.modelUsed) {
+            errorMsg += `- Использованная модель: ${result.debug.modelUsed}\n`;
+            if (result.debug.modelUsed.toLowerCase().includes("qwen") && !result.debug.modelUsed.toLowerCase().includes("image")) {
+              errorMsg += `⚠️ ПРОБЛЕМА: Используется текстовая модель Qwen вместо модели генерации изображений!\n`;
+            }
+          }
+          if (result.debug.apiUrl) {
+            errorMsg += `- API URL: ${result.debug.apiUrl}\n`;
+          }
+          if (result.debug.rawContentPreview && result.debug.rawContentPreview !== "N/A") {
+            errorMsg += `- Первые 200 символов ответа: ${result.debug.rawContentPreview.substring(0, 200)}...`;
           }
         } else if (result.rawContent) {
           errorMsg += `\n\nОтвет API: ${result.rawContent.substring(0, 300)}...`;
-        } else if (result.fullResponse) {
-          errorMsg += `\n\nПолный ответ API сохранен в консоли браузера (F12 → Console)`;
         }
         
         throw new Error(errorMsg);
