@@ -209,6 +209,7 @@ export default function GeneratorForm({
   const [isFormReady, setIsFormReady] = useState(false);
 
   const [pains, setPains] = useState<string[]>([]);
+  const [selectedPains, setSelectedPains] = useState<string[]>([]);
   const [isGeneratingPains, setIsGeneratingPains] = useState(false);
   const [painsError, setPainsError] = useState<string | null>(null);
 
@@ -259,6 +260,16 @@ export default function GeneratorForm({
     const segments = [...audienceAge, ...audienceGroups];
     return segments.length ? segments.join(", ") : "";
   }, [audienceAge, audienceGroups]);
+  const buildPainsPayload = useCallback(() => {
+    return {
+      category: trimmedCategory,
+      audience: audienceDescription || undefined,
+      uniqueness: form.uniqueness.trim() || undefined,
+      tech: undefined,
+      wishes: form.comment.trim() || undefined,
+      innovation: undefined
+    };
+  }, [audienceDescription, form.comment, form.uniqueness, trimmedCategory]);
 
   useEffect(() => {
     const ready = Boolean(trimmedCategory) && Boolean(form.pain.trim());
@@ -322,19 +333,10 @@ export default function GeneratorForm({
     try {
       setIsGeneratingPains(true);
       setPainsError(null);
-      const payload = {
-        category: trimmedCategory,
-        audience: audienceDescription || undefined,
-        uniqueness: form.uniqueness.trim() || undefined,
-        tech: undefined,
-        wishes: form.comment.trim() || undefined,
-        innovation: undefined
-      };
-
       const response = await fetch("/api/generate-pains", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(buildPainsPayload())
       });
 
       if (!response.ok) {
@@ -344,11 +346,13 @@ export default function GeneratorForm({
       const data = await response.json();
       if (!data || !Array.isArray(data.pains) || data.pains.length === 0) {
         setPains([]);
+        setSelectedPains([]);
         setPainsError("Сервис не вернул список болей");
         return;
       }
 
       setPains(data.pains);
+      setSelectedPains([]);
     } catch (error) {
       console.error("generate-pains error", error);
       const message =
@@ -356,25 +360,67 @@ export default function GeneratorForm({
           ? error.message
           : "Не удалось получить список болей";
       setPains([]);
+      setSelectedPains([]);
       setPainsError(message);
       showToast(message, "error");
     } finally {
       setIsGeneratingPains(false);
     }
-  }, [
-    audienceDescription,
-    form.comment,
-    form.uniqueness,
-    showToast,
-    trimmedCategory
-  ]);
+  }, [buildPainsPayload, showToast, trimmedCategory]);
 
-  const handleSelectPain = useCallback(
+  const togglePainSelect = useCallback(
     (pain: string) => {
-      updateField("pain", pain);
+      setSelectedPains((prev) => {
+        const exists = prev.includes(pain);
+        const next = exists ? prev.filter((item) => item !== pain) : [...prev, pain];
+        updateField("pain", next.join("; "));
+        return next;
+      });
     },
     [updateField]
   );
+
+  const handleGenerateMorePains = useCallback(async () => {
+    try {
+      setIsGeneratingPains(true);
+      setPainsError(null);
+      const response = await fetch("/api/generate-pains", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildPainsPayload())
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch pains");
+      }
+
+      const data = await response.json();
+      const extra = Array.isArray(data.pains) ? data.pains : [];
+      if (!extra.length) {
+        return;
+      }
+
+      setPains((prev) => {
+        const merged = [...prev];
+        extra.forEach((item) => {
+          if (typeof item === "string" && !merged.includes(item)) {
+            merged.push(item);
+          }
+        });
+        return merged;
+      });
+    } catch (error) {
+      console.error("generate-more-pains error", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Не удалось получить список болей";
+      setPainsError(message);
+      showToast(message, "error");
+    } finally {
+      setIsGeneratingPains(false);
+    }
+  }, [buildPainsPayload, showToast]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -651,34 +697,60 @@ export default function GeneratorForm({
           </div>
         )}
 
-        {isGeneratingPains && (
-          <div className="mt-2 text-xs text-gray-500 animate-pulse">
-            Генерируем список болей…
+        <div
+          id="painBlock"
+          className="mt-3 rounded-2xl border border-white/50 bg-white/70 p-4 shadow-sm backdrop-blur-sm"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-neutral-700">
+              Сгенерированные боли
+            </p>
           </div>
-        )}
 
-        {pains.length > 0 && (
-          <div className="mt-3 p-3 border border-gray-200 rounded-2xl bg-white shadow-sm transition-all duration-300 ease-out">
-            <p className="text-xs font-semibold text-gray-700 mb-2">
-              Предложенные боли:
-            </p>
-            <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
-              {pains.map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSelectPain(item)}
-                  className="w-full text-left text-sm p-2 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition border border-transparent hover:border-gray-200"
-                >
-                  {item}
-                </button>
-              ))}
+          {isGeneratingPains && pains.length === 0 && (
+            <div className="flex flex-col gap-2 mt-2">
+              <span className="h-2.5 rounded-full bg-neutral-200 opacity-70 animate-pulse" />
+              <span className="h-2.5 rounded-full bg-neutral-200 opacity-70 animate-pulse" />
+              <span className="h-2.5 rounded-full bg-neutral-200 opacity-70 animate-pulse" />
             </div>
-            <p className="mt-2 text-[11px] text-gray-400">
-              Нажмите на формулировку, чтобы подставить её в поле «Потребительская боль».
-            </p>
-          </div>
-        )}
+          )}
+
+          {pains.length > 0 && (
+            <div className="mt-3 flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+              {pains.map((item, idx) => {
+                const isSelected = selectedPains.includes(item);
+                return (
+                  <label
+                    key={`${idx}-${item.slice(0, 12)}`}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all duration-300 ease-out transform hover:-translate-y-0.5 animate-fadeIn ${
+                      isSelected
+                        ? "border-red-400 bg-red-50 shadow-sm"
+                        : "border-neutral-200 bg-white hover:bg-neutral-100"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mr-2 accent-[#ff4d4f]"
+                      checked={isSelected}
+                      onChange={() => togglePainSelect(item)}
+                    />
+                    {item}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          {pains.length > 0 && (
+            <button
+              type="button"
+              className="text-sm text-red-600 underline hover:text-red-800 transition mt-2"
+              onClick={handleGenerateMorePains}
+            >
+              Сгенерировать ещё 10 вариантов
+            </button>
+          )}
+        </div>
       </div>
 
       <section className="flex flex-col gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
