@@ -19,7 +19,7 @@ async function callGeminiImageGeneration(prompt) {
     process.env.QWEN_API_URL || "https://openrouter.ai/api/v1/chat/completions";
   const apiKey = process.env.QWEN_API_KEY;
   const model =
-    process.env.IMAGE_MODEL_NAME || "google/gemini-2.5-flash-image-preview";
+    process.env.IMAGE_MODEL_NAME || "google/gemini-2.5-flash-image";
 
   if (!apiKey) {
     throw new Error("QWEN_API_KEY is not configured");
@@ -40,6 +40,8 @@ async function callGeminiImageGeneration(prompt) {
     model,
     messages,
     temperature: 0.8
+    // Для моделей генерации изображений не нужен response_format: json_object
+    // Они возвращают изображения в специальном формате
   };
 
   const headers = {
@@ -91,10 +93,20 @@ async function callGeminiImageGeneration(prompt) {
         // Если content - это массив (может содержать текст и изображения)
         if (Array.isArray(msgContent)) {
           for (const item of msgContent) {
+            // OpenRouter может возвращать изображения в разных форматах
             if (item.type === "image_url" && item.image_url?.url) {
               imageUrl = item.image_url.url;
             } else if (item.type === "image" && item.image) {
-              imageBase64 = item.image;
+              // Может быть base64 или URL
+              if (item.image.startsWith("data:")) {
+                imageBase64 = item.image;
+              } else if (item.image.startsWith("http")) {
+                imageUrl = item.image;
+              } else {
+                imageBase64 = item.image;
+              }
+            } else if (item.type === "image" && item.url) {
+              imageUrl = item.url;
             } else if (typeof item === "string") {
               content = item;
             }
@@ -104,12 +116,26 @@ async function callGeminiImageGeneration(prompt) {
         }
       }
 
-      // Проверяем наличие изображения в других полях
+      // Проверяем наличие изображения в других полях choice
+      if (choice.image_url) {
+        imageUrl = choice.image_url;
+      }
+      if (choice.image) {
+        imageBase64 = choice.image;
+      }
+      if (choice.url) {
+        imageUrl = choice.url;
+      }
+
+      // Проверяем наличие изображения в message
       if (choice.message?.image_url) {
         imageUrl = choice.message.image_url;
       }
       if (choice.message?.image) {
         imageBase64 = choice.message.image;
+      }
+      if (choice.message?.url) {
+        imageUrl = choice.message.url;
       }
     }
   }
@@ -174,6 +200,10 @@ async function callGeminiImageGeneration(prompt) {
 function buildImagePrompt(input) {
   const parts = [];
 
+  // Явно указываем, что нужна генерация изображения
+  parts.push("ВАЖНО: Ты должен сгенерировать изображение упаковки продукта, а не текстовое описание.");
+  parts.push("Верни изображение в формате URL или base64, а не текстовое описание.");
+  parts.push("");
   parts.push("Создай профессиональное изображение упаковки продукта для маркетинга.");
 
   if (input.name) {
@@ -211,6 +241,8 @@ function buildImagePrompt(input) {
   parts.push("- Учитывай целевую аудиторию и стиль бренда");
   parts.push("- Изображение должно быть готово для использования в маркетинге");
   parts.push("- Формат: реалистичная фотография или 3D-рендер упаковки");
+  parts.push("");
+  parts.push("ВЕРНИ ИЗОБРАЖЕНИЕ, А НЕ ТЕКСТОВОЕ ОПИСАНИЕ!");
 
   return parts.join("\n");
 }
