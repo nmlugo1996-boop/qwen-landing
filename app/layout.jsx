@@ -3,7 +3,14 @@ import Header from "../components/Header";
 
 export const metadata = {
   title: "Генератор уникальных Мясных продуктов",
-  description: "По методике Когнитивно-Сенсорного Маркетинга (“Полярная звезда”)"
+  description: "По методике Когнитивно-Сенсорного Маркетинга ("Полярная звезда")"
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true
 };
 
 const BUILD_SHA = process.env.VERCEL_GIT_COMMIT_SHA || "local";
