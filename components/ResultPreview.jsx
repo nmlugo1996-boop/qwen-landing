@@ -204,18 +204,31 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       const result = await response.json();
 
       console.log("Image generation result:", result);
+      console.log("Full API response:", JSON.stringify(result, null, 2));
 
-      if (result.imageUrl) {
+      if (result.success && result.imageUrl) {
         setImageUrl(result.imageUrl);
         setImageBase64(null);
-      } else if (result.imageBase64) {
+      } else if (result.success && result.imageBase64) {
         setImageBase64(result.imageBase64);
         setImageUrl(null);
       } else {
-        // Если есть rawContent, показываем его для отладки
-        const errorMsg = result.rawContent 
-          ? `Изображение не было сгенерировано. Ответ API: ${result.rawContent.substring(0, 200)}...`
-          : "Изображение не было сгенерировано. Проверьте логи сервера.";
+        // Если есть debug информация, показываем её
+        let errorMsg = "Изображение не было сгенерировано.";
+        
+        if (result.debug) {
+          errorMsg += `\n\nОтладочная информация:\n`;
+          errorMsg += `- Есть choices: ${result.debug.hasChoices}\n`;
+          errorMsg += `- Количество choices: ${result.debug.choicesLength}\n`;
+          if (result.debug.firstChoiceContent !== "N/A") {
+            errorMsg += `- Первые 200 символов ответа: ${result.debug.firstChoiceContent.substring(0, 200)}...`;
+          }
+        } else if (result.rawContent) {
+          errorMsg += `\n\nОтвет API: ${result.rawContent.substring(0, 300)}...`;
+        } else if (result.fullResponse) {
+          errorMsg += `\n\nПолный ответ API сохранен в консоли браузера (F12 → Console)`;
+        }
+        
         throw new Error(errorMsg);
       }
     } catch (error) {

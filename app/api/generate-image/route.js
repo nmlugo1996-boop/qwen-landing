@@ -223,12 +223,30 @@ export async function POST(request) {
     const prompt = buildImagePrompt(payload);
     const result = await callGeminiImageGeneration(prompt);
 
+  // Если изображение не найдено, возвращаем полный ответ для отладки
+  if (!result.imageUrl && !result.imageBase64) {
+    console.error("Image not found in response. Full response:", JSON.stringify(data, null, 2));
     return NextResponse.json({
-      success: true,
-      imageUrl: result.imageUrl,
-      imageBase64: result.imageBase64,
-      rawContent: result.rawContent
+      success: false,
+      error: "Изображение не было найдено в ответе API",
+      imageUrl: null,
+      imageBase64: null,
+      rawContent: result.rawContent,
+      fullResponse: data, // Возвращаем полный ответ для диагностики
+      debug: {
+        hasChoices: !!data?.choices,
+        choicesLength: data?.choices?.length || 0,
+        firstChoiceContent: data?.choices?.[0]?.message?.content?.substring?.(0, 500) || "N/A"
+      }
     });
+  }
+
+  return NextResponse.json({
+    success: true,
+    imageUrl: result.imageUrl,
+    imageBase64: result.imageBase64,
+    rawContent: result.rawContent
+  });
   } catch (error) {
     console.error("Generate image API error", error);
     const message =
