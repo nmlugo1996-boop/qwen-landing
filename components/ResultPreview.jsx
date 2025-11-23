@@ -258,40 +258,6 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
 
   return (
     <aside className="flex flex-col gap-4 md:gap-6 lg:sticky lg:top-32">
-      <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-6 shadow-inner flex flex-col items-center justify-center text-center gap-4 mb-6">
-        <div className="w-full aspect-video bg-neutral-200/70 rounded-lg flex items-center justify-center text-neutral-500 text-sm md:text-base overflow-hidden relative">
-          {imageUrl || imageBase64 ? (
-            <img
-              src={imageUrl || imageBase64}
-              alt={`Упаковка продукта ${getValue("name")}`}
-              className="w-full h-full object-contain rounded-lg"
-            />
-          ) : isGeneratingImage ? (
-            <div className="flex flex-col items-center gap-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5B5B]"></div>
-              <span className="text-xs">Генерируем изображение...</span>
-            </div>
-          ) : imageError ? (
-            <div className="flex flex-col items-center gap-2 text-red-500">
-              <span className="text-xs">Ошибка: {imageError}</span>
-            </div>
-          ) : (
-            <span>Здесь появится изображение упаковки продукта</span>
-          )}
-        </div>
-        <button
-          onClick={handleGenerateImage}
-          disabled={isGeneratingImage || !draft}
-          className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-            isGeneratingImage || !draft
-              ? "bg-neutral-300 text-neutral-600 cursor-not-allowed"
-              : "bg-[#FF5B5B] text-white hover:bg-[#FF7171] shadow-md"
-          }`}
-        >
-          {isGeneratingImage ? "Генерация..." : "Сгенерировать упаковку"}
-        </button>
-      </div>
-
       {celebration ? (
         <div className="passport-ready-label rounded-xl md:rounded-3xl p-3 md:p-4 text-center text-xs md:text-sm shadow-sm md:shadow-lg">
           Поздравляем! Вы создали новый продукт!
