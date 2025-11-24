@@ -459,8 +459,9 @@ export default function GeneratorForm({
         return;
       }
 
-      setIsGenerating(true);
+      // Прокручиваем наверх перед началом генерации
       onSubmitStart?.();
+      setIsGenerating(true);
 
       try {
         const response = await fetch("/api/generate", {

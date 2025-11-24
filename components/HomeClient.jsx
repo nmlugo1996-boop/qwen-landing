@@ -34,6 +34,7 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
   };
   const scrollToTop = () => {
     if (typeof window === "undefined") return;
+    // Прокручиваем на самый верх страницы с плавной анимацией
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
