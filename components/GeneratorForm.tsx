@@ -446,6 +446,10 @@ export default function GeneratorForm({
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
+      
+      // Сразу прокручиваем наверх при нажатии на кнопку
+      onSubmitStart?.();
+      
       const categoryValue = trimmedCategory;
       const painValue = form.pain.trim();
 
@@ -459,8 +463,6 @@ export default function GeneratorForm({
         return;
       }
 
-      // Прокручиваем наверх перед началом генерации
-      onSubmitStart?.();
       setIsGenerating(true);
 
       try {

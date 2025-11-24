@@ -34,8 +34,12 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
   };
   const scrollToTop = () => {
     if (typeof window === "undefined") return;
-    // Прокручиваем на самый верх страницы с плавной анимацией
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Сначала мгновенная прокрутка для быстрого отклика
+    window.scrollTo({ top: 0, behavior: "auto" });
+    // Затем плавная прокрутка для лучшего UX
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 10);
   };
 
   // DOCX download removed: no route, no auto-download
