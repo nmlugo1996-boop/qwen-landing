@@ -399,6 +399,21 @@ export default function GeneratorForm({
     []
   );
 
+  const handleSelectAll = useCallback(() => {
+    setForm((prev) => {
+      const newDiagnostics = { ...prev.diagnostics };
+      DIAGNOSTIC_SECTIONS.forEach((section) => {
+        section.questions.forEach((question) => {
+          newDiagnostics[question.id] = "yes";
+        });
+      });
+      return {
+        ...prev,
+        diagnostics: newDiagnostics
+      };
+    });
+  }, []);
+
   const handleGeneratePains = useCallback(() => {
     const selectedAge = audienceAge.length > 0 ? audienceAge[0] : null;
     
@@ -725,13 +740,22 @@ export default function GeneratorForm({
       </div>
 
       <section className="flex flex-col gap-3 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
-        <div>
-          <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600">
-            ПОЖЕЛАНИЯ К НОВОМУ ПРОДУКТУ
-          </h3>
-          <p className="text-xs text-neutral-500 mt-1">
-            Отметьте, какие секции особенно важны для вас — это поможет сделать паспорт точнее.
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600">
+              ПОЖЕЛАНИЯ К НОВОМУ ПРОДУКТУ
+            </h3>
+            <p className="text-xs text-neutral-500 mt-1">
+              Отметьте, какие секции особенно важны для вас — это поможет сделать паспорт точнее.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSelectAll}
+            className="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-semibold text-white shadow-md transition bg-[#FF5B5B] hover:bg-[#FF7171] whitespace-nowrap"
+          >
+            Выбрать всё
+          </button>
         </div>
         <div className="space-y-6">
           {DIAGNOSTIC_SECTIONS.map((section) => (
