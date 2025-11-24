@@ -15,6 +15,9 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
   const [imageBase64, setImageBase64] = useState(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageError, setImageError] = useState(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingDots, setLoadingDots] = useState("");
+  const [loadingParticles, setLoadingParticles] = useState([]);
   const header = draft?.header ?? {};
   const blocks = draft?.blocks ?? {};
 
@@ -24,6 +27,57 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       setPrevDraft(draft);
     }
   }, [draft, loading, prevDraft]);
+
+  // Анимация загрузки - частицы
+  useEffect(() => {
+    if (!loading) {
+      setLoadingParticles([]);
+      return;
+    }
+
+    const newParticles = Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      delay: Math.random() * 3,
+      size: Math.random() * 4 + 2,
+      speed: Math.random() * 1.5 + 1
+    }));
+    setLoadingParticles(newParticles);
+  }, [loading]);
+
+  // Анимация загрузки - прогресс
+  useEffect(() => {
+    if (!loading) {
+      setLoadingProgress(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setLoadingProgress((prev) => {
+        if (prev >= 95) return prev;
+        return prev + Math.random() * 3;
+      });
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  // Анимация загрузки - точки
+  useEffect(() => {
+    if (!loading) {
+      setLoadingDots("");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setLoadingDots((prev) => {
+        if (prev === "...") return "";
+        return prev + ".";
+      });
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const getValue = useCallback(
     (key, fallback = "—") => {
@@ -270,16 +324,57 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
         aria-live="polite"
         style={{ opacity: draft && !loading ? 1 : 0.6 }}
       >
-        <div className="flex flex-col gap-2">
-          <h2 className="text-xl md:text-2xl font-semibold text-neutral-900">
-            Паспорт уникального продукта
-          </h2>
-          <p className="text-xs md:text-sm text-neutral-600">
-            Когнитивно-сенсорный маркетинговый паспорт по методике «Полярная звезда»
-          </p>
-        </div>
+        {loading && !draft ? (
+          // Анимация загрузки
+          <div className="flex flex-col gap-6 py-8">
+            <div className="text-center">
+              <h2 className="text-xl md:text-2xl font-semibold text-neutral-900">
+                Создаём ваш уникальный продукт{loadingDots}
+              </h2>
+            </div>
 
-        <div id="fp-content" className="mt-4 md:mt-6 flex flex-col gap-4 md:gap-6">
+            {/* Прогресс-бар с частицами */}
+            <div className="relative h-2 bg-neutral-200 rounded-full overflow-visible">
+              {/* Фон прогресс-бара */}
+              <div className="absolute inset-0 bg-gradient-to-r from-neutral-100 to-neutral-200 rounded-full" />
+              
+              {/* Заполнение прогресс-бара */}
+              <div
+                className="absolute left-0 top-0 h-full bg-gradient-to-r from-[#FF5B5B] to-[#FF7B5B] rounded-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(255,91,91,0.5)]"
+                style={{ width: `${Math.min(loadingProgress, 100)}%` }}
+              >
+                {/* Свечение на конце прогресс-бара */}
+                <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-r from-transparent to-white/30 blur-sm" />
+              </div>
+
+              {/* Частицы вокруг прогресс-бара */}
+              {loadingParticles.map((particle) => (
+                <div
+                  key={particle.id}
+                  className="absolute top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[#FF5B5B] to-[#FF7B5B] opacity-70 shadow-[0_0_6px_rgba(255,91,91,0.6)] pointer-events-none"
+                  style={{
+                    left: `${particle.x}%`,
+                    width: `${particle.size}px`,
+                    height: `${particle.size}px`,
+                    animationDelay: `${particle.delay}s`,
+                    animation: `floatUp ${2 + particle.speed}s ease-out infinite`
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-xl md:text-2xl font-semibold text-neutral-900">
+                Паспорт уникального продукта
+              </h2>
+              <p className="text-xs md:text-sm text-neutral-600">
+                Когнитивно-сенсорный маркетинговый паспорт по методике «Полярная звезда»
+              </p>
+            </div>
+
+            <div id="fp-content" className="mt-4 md:mt-6 flex flex-col gap-4 md:gap-6">
           {/* Шапка продукта */}
           <div className="space-y-3 md:space-y-4">
             <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
@@ -380,7 +475,29 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
             </button>
           </div>
         </div>
+          </>
+        )}
       </section>
+      <style jsx>{`
+        @keyframes floatUp {
+          0% {
+            transform: translateY(0) translateX(0) scale(1);
+            opacity: 0.7;
+          }
+          30% {
+            transform: translateY(-15px) translateX(5px) scale(1.3);
+            opacity: 1;
+          }
+          60% {
+            transform: translateY(-30px) translateX(15px) scale(1.1);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateY(-50px) translateX(25px) scale(0.6);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </aside>
   );
 }
