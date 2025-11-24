@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import GeneratorForm from "./GeneratorForm";
 import OnboardingTour from "./OnboardingTour";
 import ResultPreview from "./ResultPreview";
+import LoadingAnimation from "./LoadingAnimation";
 
 const showToast = (message, kind = "info") => {
   const toast = document.getElementById("toast");
@@ -41,6 +42,7 @@ export default function HomeClient({ initialDraft = null, projectId = null, auto
 
   return (
     <>
+      <LoadingAnimation isVisible={loading} />
       <div className="relative">
         <div className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-[#FF5B5B]/10 blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-20 h-80 w-80 rounded-full bg-[#FFE6E6]/20 blur-3xl pointer-events-none" />
