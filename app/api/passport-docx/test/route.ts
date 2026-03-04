@@ -1,4 +1,4 @@
-import { buildMinimalTestDocx } from "../../../lib/passportDocx";
+import { buildMinimalTestDocx } from "../../../../lib/passportDocx";
 
 export const runtime = "nodejs";
 
