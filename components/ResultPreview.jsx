@@ -19,7 +19,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
   const [loadingDots, setLoadingDots] = useState("");
   const [loadingParticles, setLoadingParticles] = useState([]);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [downloadDocxLoading, setDownloadDocxLoading] = useState(false);
+  const [downloadTxtLoading, setDownloadTxtLoading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const header = draft?.header ?? {};
   const blocks = draft?.blocks ?? {};
@@ -187,12 +187,12 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
     }
   }, [buildPassportText]);
 
-  const downloadDocx = useCallback(async () => {
+  const downloadTxt = useCallback(async () => {
     if (!draft) return;
-    setDownloadDocxLoading(true);
+    setDownloadTxtLoading(true);
     setDownloadProgress(2);
     try {
-      const res = await fetch("/api/passport-docx", {
+      const res = await fetch("/api/passport-txt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ draft }),
@@ -204,7 +204,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
         if (ct.includes("application/json")) {
           const data = await res.json().catch(() => null);
           throw new Error(
-            data?.message || data?.error || "Ошибка сервера при генерации DOCX"
+            data?.message || data?.error || "Ошибка сервера при генерации паспорта"
           );
         }
         throw new Error("Сервер вернул статус " + res.status);
@@ -213,18 +213,19 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       if (ct.includes("application/json")) {
         const data = await res.json().catch(() => null);
         throw new Error(
-          data?.message || "Сервер вернул JSON вместо DOCX. Проверьте логи Vercel."
+          data?.message || "Сервер вернул JSON вместо TXT. Проверьте логи Vercel."
         );
       }
 
       setDownloadProgress(30);
-      const blob = await res.blob();
+      const text = await res.text();
       setDownloadProgress(70);
 
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "passport.docx";
+      a.download = "passport.txt";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -232,15 +233,15 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
 
       setDownloadProgress(100);
     } catch (err) {
-      console.error("downloadDocx failed", err);
+      console.error("downloadTxt failed", err);
       const msg =
         err?.message && typeof err.message === "string" && err.message.length < 300
           ? err.message
-          : "Ошибка при скачивании документа. Проверьте консоль и логи Vercel.";
-      alert("Ошибка при скачивании: " + msg);
+          : "Ошибка при скачивании паспорта. Проверьте консоль и логи Vercel.";
+      alert("Ошибка при скачивании паспорта: " + msg);
     } finally {
       setTimeout(() => {
-        setDownloadDocxLoading(false);
+        setDownloadTxtLoading(false);
         setDownloadProgress(0);
       }, 450);
     }
@@ -573,7 +574,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
           </div>
         )}
 
-          {/* Кнопки: копировать, скачать DOCX */}
+          {/* Кнопки: копировать, скачать TXT (Docs) */}
           <div className="flex flex-col items-center gap-3 mt-4 md:mt-5">
             {copySuccess && (
               <div className="rounded-xl border-2 border-[#ff5b5b] bg-[#fff5f5] px-5 py-3 text-center text-base font-semibold text-[#c53030] shadow-md">
@@ -591,14 +592,14 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
               </button>
               <button
                 type="button"
-                onClick={downloadDocx}
-                disabled={!draft || downloadDocxLoading}
-                aria-busy={downloadDocxLoading}
-                aria-label="Скачать DOCX"
+                onClick={downloadTxt}
+                disabled={!draft || downloadTxtLoading}
+                aria-busy={downloadTxtLoading}
+                aria-label="Скачать Docs"
                 className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center justify-center gap-2"
               >
-                <span>{downloadDocxLoading ? "Готовим документ" : "Скачать DOCX"}</span>
-                {downloadDocxLoading && (
+                <span>{downloadTxtLoading ? "Готовим документ" : "Скачать Docs"}</span>
+                {downloadTxtLoading && (
                   <span className="docx-loader" aria-hidden="true">
                     <span className="docx-loader-dot" />
                     <span className="docx-loader-dot" />
