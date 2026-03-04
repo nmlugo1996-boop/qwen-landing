@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import generateApi from "../../api/generate.js";
+import generateApi from "../../../api/generate.js";
 
 export const runtime = "nodejs";
 
