@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const arrayBuffer = docxBytes.buffer.slice(
       docxBytes.byteOffset,
       docxBytes.byteOffset + docxBytes.byteLength
-    );
+    ) as ArrayBuffer;
     const blob = new Blob([arrayBuffer], {
       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
