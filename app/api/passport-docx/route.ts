@@ -13,8 +13,12 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const docxBytes: Uint8Array = await draftToDocxBinary(draft);
-    const blob = new Blob([docxBytes], {
+    const docxBytes = await draftToDocxBinary(draft);
+    const arrayBuffer = docxBytes.buffer.slice(
+      docxBytes.byteOffset,
+      docxBytes.byteOffset + docxBytes.byteLength
+    );
+    const blob = new Blob([arrayBuffer], {
       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
     return new NextResponse(blob, {
