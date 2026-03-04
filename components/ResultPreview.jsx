@@ -20,6 +20,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
   const [loadingParticles, setLoadingParticles] = useState([]);
   const [copySuccess, setCopySuccess] = useState(false);
   const [downloadDocxLoading, setDownloadDocxLoading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const header = draft?.header ?? {};
   const blocks = draft?.blocks ?? {};
 
@@ -189,31 +190,37 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
   const downloadDocx = useCallback(async () => {
     if (!draft) return;
     setDownloadDocxLoading(true);
+    setDownloadProgress(2);
     try {
       const res = await fetch("/api/passport-docx", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept:
-            "application/octet-stream,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ draft }),
       });
 
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        alert(data?.message ?? "Ошибка сервера при генерации DOCX");
-        return;
+        if (ct.includes("application/json")) {
+          const data = await res.json().catch(() => null);
+          throw new Error(
+            data?.message || data?.error || "Ошибка сервера при генерации DOCX"
+          );
+        }
+        throw new Error("Сервер вернул статус " + res.status);
       }
 
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
       if (ct.includes("application/json")) {
         const data = await res.json().catch(() => null);
-        alert(data?.message ?? "Сервер вернул JSON вместо DOCX");
-        return;
+        throw new Error(
+          data?.message || "Сервер вернул JSON вместо DOCX. Проверьте логи Vercel."
+        );
       }
 
+      setDownloadProgress(30);
       const blob = await res.blob();
+      setDownloadProgress(70);
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -222,11 +229,20 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+
+      setDownloadProgress(100);
     } catch (err) {
       console.error("downloadDocx failed", err);
-      alert("Ошибка при скачивании документа");
+      const msg =
+        err?.message && typeof err.message === "string" && err.message.length < 300
+          ? err.message
+          : "Ошибка при скачивании документа. Проверьте консоль и логи Vercel.";
+      alert("Ошибка при скачивании: " + msg);
     } finally {
-      setDownloadDocxLoading(false);
+      setTimeout(() => {
+        setDownloadDocxLoading(false);
+        setDownloadProgress(0);
+      }, 450);
     }
   }, [draft]);
 
@@ -577,9 +593,18 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
                 type="button"
                 onClick={downloadDocx}
                 disabled={!draft || downloadDocxLoading}
-                className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                aria-busy={downloadDocxLoading}
+                aria-label="Скачать DOCX"
+                className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center justify-center gap-2"
               >
-                {downloadDocxLoading ? "Готовим…" : "Скачать DOCX"}
+                <span>{downloadDocxLoading ? "Готовим документ" : "Скачать DOCX"}</span>
+                {downloadDocxLoading && (
+                  <span className="docx-loader" aria-hidden="true">
+                    <span className="docx-loader-dot" />
+                    <span className="docx-loader-dot" />
+                    <span className="docx-loader-dot" />
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -604,6 +629,34 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
           100% {
             transform: translateY(-50px) translateX(25px) scale(0.6);
             opacity: 0;
+          }
+        }
+        .docx-loader {
+          display: inline-flex;
+          gap: 6px;
+          align-items: center;
+        }
+        .docx-loader-dot {
+          width: 8px;
+          height: 8px;
+          background: #fff;
+          border-radius: 50%;
+          animation: docx-bounce 900ms infinite ease-in-out;
+        }
+        .docx-loader-dot:nth-child(2) {
+          animation-delay: 150ms;
+        }
+        .docx-loader-dot:nth-child(3) {
+          animation-delay: 300ms;
+        }
+        @keyframes docx-bounce {
+          0%, 100% {
+            transform: translateY(0);
+            opacity: 0.4;
+          }
+          50% {
+            transform: translateY(-7px);
+            opacity: 1;
           }
         }
       `}</style>
