@@ -192,25 +192,22 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
     try {
       const res = await fetch("/api/passport-docx", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept:
-            "application/octet-stream,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ draft }),
       });
 
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        alert(data?.message ?? "Ошибка сервера при генерации DOCX");
-        return;
+        if (ct.includes("application/json")) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error || err?.message || "Server error");
+        }
+        throw new Error("Server responded with status " + res.status);
       }
 
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
       if (ct.includes("application/json")) {
-        const data = await res.json().catch(() => null);
-        alert(data?.message ?? "Сервер вернул JSON вместо DOCX");
-        return;
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || JSON.stringify(err));
       }
 
       const blob = await res.blob();
@@ -224,7 +221,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("downloadDocx failed", err);
-      alert("Ошибка при скачивании документа");
+      alert("Ошибка при скачивании: " + (err?.message || err));
     } finally {
       setDownloadDocxLoading(false);
     }
@@ -577,9 +574,20 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
                 type="button"
                 onClick={downloadDocx}
                 disabled={!draft || downloadDocxLoading}
-                className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                aria-busy={downloadDocxLoading}
+                aria-label="Скачать DOCX"
+                className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center justify-center gap-2"
               >
-                {downloadDocxLoading ? "Готовим…" : "Скачать DOCX"}
+                <span className="inline-flex items-center gap-2">
+                  <span>{downloadDocxLoading ? "Готовим…" : "Скачать DOCX"}</span>
+                  {downloadDocxLoading && (
+                    <span className="docx-loader" aria-hidden="true">
+                      <span className="docx-loader-dot" />
+                      <span className="docx-loader-dot" />
+                      <span className="docx-loader-dot" />
+                    </span>
+                  )}
+                </span>
               </button>
             </div>
           </div>
@@ -604,6 +612,34 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
           100% {
             transform: translateY(-50px) translateX(25px) scale(0.6);
             opacity: 0;
+          }
+        }
+        .docx-loader {
+          display: inline-flex;
+          gap: 6px;
+          align-items: center;
+        }
+        .docx-loader-dot {
+          width: 8px;
+          height: 8px;
+          background: #fff;
+          border-radius: 50%;
+          animation: docx-bounce 900ms infinite ease-in-out;
+        }
+        .docx-loader-dot:nth-child(2) {
+          animation-delay: 150ms;
+        }
+        .docx-loader-dot:nth-child(3) {
+          animation-delay: 300ms;
+        }
+        @keyframes docx-bounce {
+          0%, 100% {
+            transform: translateY(0);
+            opacity: 0.4;
+          }
+          50% {
+            transform: translateY(-7px);
+            opacity: 1;
           }
         }
       `}</style>
