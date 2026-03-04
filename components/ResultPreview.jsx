@@ -206,8 +206,14 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       }
 
       if (ct.includes("application/json")) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error || JSON.stringify(err));
+        const data = await res.json().catch(() => ({}));
+        const msg =
+          typeof data?.error === "string"
+            ? data.error
+            : typeof data?.message === "string"
+              ? data.message
+              : "Сервер вернул JSON вместо DOCX. Проверьте логи в Vercel.";
+        throw new Error(msg);
       }
 
       const blob = await res.blob();
@@ -221,7 +227,11 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("downloadDocx failed", err);
-      alert("Ошибка при скачивании: " + (err?.message || err));
+      const msg =
+        err?.message && typeof err.message === "string" && err.message.length < 300
+          ? err.message
+          : "Ошибка при скачивании документа. Проверьте консоль и логи Vercel.";
+      alert("Ошибка при скачивании: " + msg);
     } finally {
       setDownloadDocxLoading(false);
     }

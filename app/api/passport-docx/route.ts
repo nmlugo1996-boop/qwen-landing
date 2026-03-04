@@ -15,7 +15,37 @@ export async function POST(req: Request) {
     }
     console.log("[passport-docx] got draft");
 
-    const docxBytes = await draftToDocxBinary(draft);
+    let docxBytes: unknown;
+    try {
+      docxBytes = await draftToDocxBinary(draft);
+    } catch (genErr) {
+      console.error("[passport-docx] draftToDocxBinary threw", genErr);
+      const msg =
+        genErr instanceof Error ? genErr.message : "Ошибка генерации DOCX";
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (
+      docxBytes &&
+      typeof docxBytes === "object" &&
+      !ArrayBuffer.isView(docxBytes) &&
+      "header" in docxBytes
+    ) {
+      console.error(
+        "[passport-docx] draftToDocxBinary returned object (draft?), not binary"
+      );
+      return new Response(
+        JSON.stringify({
+          error: "invalid_docx_output",
+          hint: "Сервер вернул объект вместо DOCX. Проверьте логи Vercel.",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("[passport-docx] got docxBytes, typeof:", typeof docxBytes);
 
     const BufferAvailable =
