@@ -5,7 +5,7 @@
   "description": "Генератор паспорта продукта (Полярная звезда) — Next.js App Router + Supabase + Telegram",
   "license": "MIT",
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",
