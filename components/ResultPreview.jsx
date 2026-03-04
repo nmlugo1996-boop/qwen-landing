@@ -192,13 +192,27 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
     try {
       const res = await fetch("/api/passport-docx", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept:
+            "application/octet-stream,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/json",
+        },
         body: JSON.stringify({ draft }),
       });
+
       if (!res.ok) {
-        console.error("DOCX generation failed");
+        const data = await res.json().catch(() => null);
+        alert(data?.message ?? "Ошибка сервера при генерации DOCX");
         return;
       }
+
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (ct.includes("application/json")) {
+        const data = await res.json().catch(() => null);
+        alert(data?.message ?? "Сервер вернул JSON вместо DOCX");
+        return;
+      }
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -208,8 +222,9 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error("downloadDocx failed", err);
+      alert("Ошибка при скачивании документа");
     } finally {
       setDownloadDocxLoading(false);
     }
@@ -564,7 +579,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
                 disabled={!draft || downloadDocxLoading}
                 className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition"
               >
-                {downloadDocxLoading ? "Загрузка…" : "Скачать DOCX"}
+                {downloadDocxLoading ? "Готовим…" : "Скачать DOCX"}
               </button>
             </div>
           </div>

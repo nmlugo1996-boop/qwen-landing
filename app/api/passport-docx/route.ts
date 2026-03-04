@@ -3,9 +3,9 @@ import { draftToDocxBinary } from "../../../lib/passportDocx";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
+    const body = await req.json();
     const draft = body?.draft ?? body;
     if (!draft || typeof draft !== "object") {
       return NextResponse.json(
@@ -13,26 +13,49 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const docxBytes = await draftToDocxBinary(draft);
-    const arrayBuffer = docxBytes.buffer.slice(
-      docxBytes.byteOffset,
-      docxBytes.byteOffset + docxBytes.byteLength
-    ) as ArrayBuffer;
-    const blob = new Blob([arrayBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+    console.log("[passport-docx] start", {
+      size: typeof draft === "object" ? Object.keys(draft).length : 0,
     });
-    return new NextResponse(blob, {
+
+    const docxBytes = await draftToDocxBinary(draft);
+
+    let arrayBuffer: ArrayBuffer;
+    if (typeof Buffer !== "undefined" && Buffer.isBuffer(docxBytes)) {
+      const buf = docxBytes as Buffer;
+      arrayBuffer = buf.buffer.slice(
+        buf.byteOffset,
+        buf.byteOffset + buf.byteLength
+      ) as ArrayBuffer;
+    } else if (docxBytes instanceof Uint8Array) {
+      const u8 = docxBytes;
+      arrayBuffer = u8.buffer.slice(
+        u8.byteOffset,
+        u8.byteOffset + u8.byteLength
+      ) as ArrayBuffer;
+    } else {
+      throw new Error("draftToDocxBinary returned unexpected type");
+    }
+
+    console.log("[passport-docx] done");
+
+    return new NextResponse(arrayBuffer, {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": 'attachment; filename="passport.docx"',
-        "Cache-Control": "no-store",
+        "Cache-Control": "no-store, must-revalidate",
       },
     });
-  } catch (error) {
-    console.error("passport-docx API error", error);
+  } catch (err: unknown) {
+    console.error("[passport-docx] error:", err);
     return NextResponse.json(
-      { error: (error as Error)?.message || "Ошибка генерации DOCX" },
+      {
+        error: true,
+        message: String(
+          err instanceof Error ? err.message : "Ошибка генерации DOCX"
+        ),
+      },
       { status: 500 }
     );
   }
