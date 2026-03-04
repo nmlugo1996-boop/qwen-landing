@@ -2,11 +2,18 @@
 
 Репозиторий уже инициализирован, первый коммит создан.
 
+**Git установлен у тебя в:** `D:\Program Files\Git`
+
 ## Что сделать
 
 ### 1. Подключи свой репозиторий на GitHub
 
-В терминале (в Cursor: **Terminal → New Terminal**) выполни из папки проекта:
+В терминале (в Cursor: **Terminal → New Terminal**) сначала добавь Git в PATH, затем выполни из папки проекта:
+
+```powershell
+$env:Path = "D:\Program Files\Git\bin;" + $env:Path
+cd "c:\Users\Маша\Desktop\сайт\qwen-landing-main"
+```
 
 ```powershell
 cd "c:\Users\Маша\Desktop\сайт\qwen-landing-main"
