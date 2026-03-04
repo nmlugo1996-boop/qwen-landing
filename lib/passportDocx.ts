@@ -200,7 +200,101 @@ export function buildPassportDoc(draft: DraftData): Document {
     children.push(new Paragraph({ text: "" }));
   });
 
-  // Блок рекомендаций
+  // Технология и состав — таблица
+  const techList = draft.tech;
+  if (techList && (Array.isArray(techList) ? techList.length : 0) > 0) {
+    const techItems = Array.isArray(techList) ? techList : [String(techList)];
+    children.push(
+      new Paragraph({
+        text: "Технология и состав",
+        heading: HeadingLevel.HEADING_3
+      })
+    );
+    const techTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      columnWidths: [1000, 9000],
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({ children: [boldParagraph("№")] }),
+            new TableCell({ children: [boldParagraph("Пункт")] })
+          ]
+        }),
+        ...techItems.map((item, i) =>
+          new TableRow({
+            children: [
+              new TableCell({ children: [new Paragraph(String(i + 1))] }),
+              new TableCell({ children: [new Paragraph(safeText(item))] })
+            ]
+          })
+        )
+      ]
+    });
+    children.push(techTable);
+    children.push(new Paragraph({ text: "" }));
+  }
+
+  // Почему это звезда? — таблица
+  const starList = draft.star;
+  if (starList && (Array.isArray(starList) ? starList.length : 0) > 0) {
+    const starItems = Array.isArray(starList) ? starList : [String(starList)];
+    children.push(
+      new Paragraph({
+        text: "Почему это звезда?",
+        heading: HeadingLevel.HEADING_3
+      })
+    );
+    const starTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      columnWidths: [1000, 9000],
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({ children: [boldParagraph("№")] }),
+            new TableCell({ children: [boldParagraph("Тезис")] })
+          ]
+        }),
+        ...starItems.map((item, i) =>
+          new TableRow({
+            children: [
+              new TableCell({ children: [new Paragraph(String(i + 1))] }),
+              new TableCell({ children: [new Paragraph(safeText(item))] })
+            ]
+          })
+        )
+      ]
+    });
+    children.push(starTable);
+    children.push(new Paragraph({ text: "" }));
+  }
+
+  // Заключение — таблица (одна строка: поле | текст)
+  if (draft.conclusion != null && String(draft.conclusion).trim() !== "") {
+    children.push(
+      new Paragraph({
+        text: "Заключение",
+        heading: HeadingLevel.HEADING_3
+      })
+    );
+    const conclusionTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      columnWidths: [2500, 7500],
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({ children: [boldParagraph("Текст")] }),
+            new TableCell({
+              children: [new Paragraph(safeText(draft.conclusion))]
+            })
+          ]
+        })
+      ]
+    });
+    children.push(conclusionTable);
+    children.push(new Paragraph({ text: "" }));
+  }
+
+  // Рекомендации — таблица
   const recommendations = [
     "Проведите тестирование продукта с целевой аудиторией для валидации концепции",
     "Разработайте детальную стратегию позиционирования на основе уникальности продукта",
@@ -216,14 +310,27 @@ export function buildPassportDoc(draft: DraftData): Document {
     })
   );
 
-  recommendations.forEach((item, index) => {
-    children.push(
-      new Paragraph({
-        text: `${index + 1}. ${item}`
-      })
-    );
+  const recTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    columnWidths: [1000, 9000],
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({ children: [boldParagraph("№")] }),
+          new TableCell({ children: [boldParagraph("Рекомендация")] })
+        ]
+      }),
+      ...recommendations.map((item, i) =>
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph(String(i + 1))] }),
+            new TableCell({ children: [new Paragraph(item)] })
+          ]
+        })
+      )
+    ]
   });
-
+  children.push(recTable);
   children.push(new Paragraph({ text: "" }));
 
   // Футер

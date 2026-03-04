@@ -13,13 +13,16 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const buffer = await draftToDocxBinary(draft);
-    const filename = "passport.docx";
-    return new NextResponse(buffer, {
+    const docxBytes: Uint8Array = await draftToDocxBinary(draft);
+    const blob = new Blob([docxBytes], {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    return new NextResponse(blob, {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": 'attachment; filename="passport.docx"',
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {

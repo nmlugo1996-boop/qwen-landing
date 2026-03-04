@@ -186,7 +186,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
     }
   }, [buildPassportText]);
 
-  const handleDownloadWord = useCallback(async () => {
+  const downloadDocx = useCallback(async () => {
     if (!draft) return;
     setDownloadDocxLoading(true);
     try {
@@ -195,13 +195,18 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ draft }),
       });
-      if (!res.ok) throw new Error("Ошибка загрузки");
+      if (!res.ok) {
+        console.error("DOCX generation failed");
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "passport.docx";
+      document.body.appendChild(a);
       a.click();
+      a.remove();
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error(e);
@@ -209,11 +214,6 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
       setDownloadDocxLoading(false);
     }
   }, [draft]);
-
-  const handleDownloadPdf = useCallback(() => {
-    if (typeof window === "undefined") return;
-    window.print();
-  }, []);
 
   // Извлекаем данные для генерации изображения
   const getImageGenerationData = useCallback(() => {
@@ -542,7 +542,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
           </div>
         )}
 
-          {/* Кнопки: копировать, Word, PDF */}
+          {/* Кнопки: копировать, скачать DOCX */}
           <div className="flex flex-col items-center gap-3 mt-4 md:mt-5">
             {copySuccess && (
               <div className="rounded-xl border-2 border-[#ff5b5b] bg-[#fff5f5] px-5 py-3 text-center text-base font-semibold text-[#c53030] shadow-md">
@@ -560,19 +560,11 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
               </button>
               <button
                 type="button"
-                onClick={handleDownloadWord}
+                onClick={downloadDocx}
                 disabled={!draft || downloadDocxLoading}
-                className="px-6 py-3 rounded-full bg-white border-2 border-[#ff5b5b] text-[#ff5b5b] text-sm md:text-base font-semibold shadow-md hover:bg-[#fff5f5] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition"
               >
-                {downloadDocxLoading ? "Загрузка…" : "Скачать Word"}
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadPdf}
-                disabled={!draft}
-                className="px-6 py-3 rounded-full bg-white border-2 border-[#ff5b5b] text-[#ff5b5b] text-sm md:text-base font-semibold shadow-md hover:bg-[#fff5f5] disabled:opacity-40 disabled:cursor-not-allowed transition"
-              >
-                Скачать PDF
+                {downloadDocxLoading ? "Загрузка…" : "Скачать DOCX"}
               </button>
             </div>
           </div>
