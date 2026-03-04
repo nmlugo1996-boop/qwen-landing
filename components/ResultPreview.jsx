@@ -18,6 +18,7 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingDots, setLoadingDots] = useState("");
   const [loadingParticles, setLoadingParticles] = useState([]);
+  const [copySuccess, setCopySuccess] = useState(false);
   const header = draft?.header ?? {};
   const blocks = draft?.blocks ?? {};
 
@@ -179,6 +180,8 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
     if (!text) return;
     if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(text);
+      setCopySuccess(true);
+      window.setTimeout(() => setCopySuccess(false), 2500);
     }
   }, [buildPassportText]);
 
@@ -510,7 +513,12 @@ export default function ResultPreview({ draft, loading, celebration = false }) {
         )}
 
           {/* Кнопка копирования паспорта */}
-          <div className="flex justify-center mt-4 md:mt-5">
+          <div className="flex flex-col items-center gap-3 mt-4 md:mt-5">
+            {copySuccess && (
+              <div className="rounded-xl border-2 border-[#ff5b5b] bg-[#fff5f5] px-5 py-3 text-center text-base font-semibold text-[#c53030] shadow-md">
+                Ваш паспорт скопирован!
+              </div>
+            )}
             <button
               type="button"
               onClick={handleCopy}
