@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import path from "node:path";
-import { createRequire } from "node:module";
+import generateApi from "../../api/generate.js";
 
 export const runtime = "nodejs";
 
-const require = createRequire(path.join(process.cwd(), "package.json"));
-const { runGenerate } = require(path.join(process.cwd(), "api", "generate.js"));
+const runGenerate = generateApi.runGenerate;
 
 export async function POST(request) {
   try {
