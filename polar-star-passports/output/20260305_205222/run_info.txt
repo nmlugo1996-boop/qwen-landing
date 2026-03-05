@@ -1,0 +1,5 @@
+timestamp: 20260305_205222
+APPLY: false
+GIT_PUSH: true
+BRANCH_PREFIX: fix/passport-compat
+note: quick_fix generation run — files saved to output only, not applied

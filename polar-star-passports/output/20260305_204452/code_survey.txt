@@ -1,0 +1,11 @@
+Files referencing passport_schema / passport_prompt / short_passport / sensory_block / validation_plan / PassportDocs:
+
+polar-star-passports/passport_schema.json        — SOURCE: schema definition
+polar-star-passports/examples/good_passport.json — SOURCE: example (INVALID vs new schema)
+polar-star-passports/examples/bad_passport.json  — SOURCE: bad example (INVALID)
+app/api/generate/passport/route.js               — USES: passport_schema.json (Ajv), passport_prompt.txt
+lib/passportDocx.js                              — REFERENCES: schema fields (sensory_block etc.)
+
+NOTE: good_passport.json uses old cognitive_block format (numbered keys like "1.a_consumption_change").
+      New schema requires flat arrays: consumption_change, rituals, narratives, desired_model, education.
+      New schema also requires top-level: production, regulatory, commerce, validation_plan, appendices, sign_off_checklist.

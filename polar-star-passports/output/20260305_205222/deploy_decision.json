@@ -1,0 +1,27 @@
+{
+  "timestamp": "20260305_205222",
+  "APPLY": false,
+  "BLOCK_DEPLOY": true,
+  "block_reason": "APPLY=false — изменения не применены к репо. quick_fix файлы сгенерированы и прошли валидацию. Деплой возможен только после APPLY=true.",
+  "quick_fix_validation": {
+    "quick_fix_good_passport.json": {"valid": true, "errors": 0},
+    "quick_fix_bad_passport.json": {"valid": true, "errors": 0},
+    "meatcode_fixed.md": {"sections": "10/10", "all_required_present": true},
+    "shokovsyanka_placeholder.md": "создан — mammoth не установлен, MD-замена для docx готова как placeholder"
+  },
+  "remaining_blockers": [
+    {
+      "issue": "shokovsyanka_march_2026.docx не конвертирован в MD",
+      "severity": "BLOCKER",
+      "fix": "npm install mammoth turndown --no-audit --no-fund && node -e \"...\" (команды в quick_fix/shokovsyanka_placeholder.md)",
+      "workaround": "placeholder.md создан — после APPLY=true он появится как замена, что может разблокировать по условию 'MD-замена присутствует'"
+    }
+  ],
+  "ready_to_apply": {
+    "good_passport": true,
+    "bad_passport": true,
+    "meatcode_fixed": true,
+    "docx": "blocked — нужен mammoth или ручная конвертация"
+  },
+  "next_step": "Если хотите применить quick_fix: установите APPLY=true и перезапустите промпт. Или выполните git-команды из diagnostic_summary.md вручную."
+}

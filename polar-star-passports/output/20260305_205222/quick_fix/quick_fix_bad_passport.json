@@ -1,0 +1,169 @@
+{
+  "_quick_fix_meta": {
+    "generated": "20260305_205222",
+    "note": "AUTO: quick_fix — исправить типы данных (строки→массивы, массивы→объекты для sensory_block). Это намеренно плохой пример — содержание оставлено пустым/примитивным, но типы должны соответствовать схеме.",
+    "changes": [
+      "desired_model.thoughts: string → array",
+      "desired_model.behaviors: string → array",
+      "education: string → array",
+      "sensory_block.*: arrays → objects с required sub-fields",
+      "branding.brand_core: string → array",
+      "regulatory.labeling_requirements: string → array",
+      "marketing.product_spec: string → object",
+      "marketing.pricing: string → object",
+      "production: rebuilt with required keys (technology_process_steps, qc_checkpoints, shelf_life_days, packaging_spec)",
+      "Added sign_off_checklist (required top-level array)"
+    ]
+  },
+
+  "short_passport": {
+    "category": "Еда/Снеки",
+    "name": "Мясной Рывок",
+    "audience": "не определена",
+    "pain": "Люди устали и хотят есть",
+    "uniqueness": "Вкусный и натуральный"
+  },
+
+  "cognitive_block": {
+    "consumption_change": ["Ешьте это после тренировки и будете как профи"],
+    "rituals": ["есть в раздевалке"],
+    "narratives": ["Мы круче всех", "Настоящее мясо для всех"],
+    "desired_model": {
+      "thoughts": ["Должны думать о результате"],
+      "feelings": [],
+      "behaviors": ["купить снова"]
+    },
+    "education": ["Будем снимать видео"]
+  },
+
+  "sensory_block": {
+    "visual": {
+      "desired_experience": "красивая упаковка с фото мяса",
+      "measurable_goal": "не определено",
+      "protocol_test": {},
+      "analysis_method": "не определено",
+      "acceptance_criteria": "не определено",
+      "recommendations": ["большая надпись 20g"]
+    },
+    "audio": {
+      "desired_experience": "не определено",
+      "measurable_goal": "не определено",
+      "protocol_test": {},
+      "analysis_method": "не определено",
+      "acceptance_criteria": "не определено",
+      "recommendations": []
+    },
+    "smell": {
+      "desired_experience": "приятный запах мяса, немного копчёности",
+      "measurable_goal": "не определено",
+      "protocol_test": {},
+      "analysis_method": "не определено",
+      "acceptance_criteria": "не определено",
+      "recommendations": []
+    },
+    "tactile": {
+      "desired_experience": "не определено",
+      "measurable_goal": "не определено",
+      "protocol_test": {},
+      "analysis_method": "не определено",
+      "acceptance_criteria": "не определено",
+      "recommendations": []
+    },
+    "taste": {
+      "desired_experience": "насыщенный вкус, немного солёного",
+      "measurable_goal": "не определено",
+      "protocol_test": {},
+      "analysis_method": "не определено",
+      "acceptance_criteria": "не определено",
+      "recommendations": []
+    }
+  },
+
+  "branding": {
+    "story": "Мы лучшие, потому что настоящие",
+    "promise": "Лучше всех",
+    "brand_core": ["аутентичность"],
+    "context": {
+      "favorable": [],
+      "unfavorable": []
+    },
+    "customer_journey": []
+  },
+
+  "marketing": {
+    "segments": [],
+    "product_spec": {
+      "weight_g": 40,
+      "protein_g": 20,
+      "note": "описание отсутствует"
+    },
+    "pricing": {
+      "rrc_rub": 150,
+      "note": "цена примерная, обоснования нет"
+    },
+    "channels": ["соцсети", "какие-то залы"],
+    "promotional_tactics": ["челлендж", "сотрудничество с блогерами"]
+  },
+
+  "production": {
+    "technology_process_steps": [
+      {"step": "Производство", "detail": "сделаем как все: перемешать, сформовать, запечь"}
+    ],
+    "qc_checkpoints": [],
+    "shelf_life_days": 90,
+    "packaging_spec": {
+      "material": "красивая плёнка",
+      "o2_transmission_rate": "не определено",
+      "moisture_transmission": "не определено",
+      "seal_strength": "не определено"
+    }
+  },
+
+  "regulatory": {
+    "allowed_claims": [],
+    "forbidden_claims": [],
+    "labeling_requirements": ["укажем белок и дату"]
+  },
+
+  "commerce": {
+    "unit_economics": {
+      "cost_per_unit_rub": 0,
+      "rrc_assumed_rub": 150,
+      "gross_margin_percent": "не рассчитана",
+      "notes": "описание отсутствует, числа не обоснованы"
+    }
+  },
+
+  "validation_plan": [
+    {
+      "name": "тест",
+      "hypothesis": "все понравится",
+      "method": "просто раздаём",
+      "kpi": "не определено"
+    }
+  ],
+
+  "risks": [
+    {"risk": "могут не любить", "mitigation": "сделаем вкуснее"}
+  ],
+
+  "appendices": {
+    "sensory_protocol_template": {},
+    "product_card_example": {},
+    "unit_economics_template": "",
+    "qa_checklist_template": []
+  },
+
+  "sign_off_checklist": [
+    {"item": "КРАТКИЙ ПАСПОРТ — заполнен", "status": "No", "comments": "поля неполные (audience пуста, числа отсутствуют)"},
+    {"item": "Все 5 сенсорных модальностей — измеримые цели и протоколы", "status": "No", "comments": "measurable_goal и protocol_test не заполнены"},
+    {"item": "Unit economics — формулы + пример", "status": "No", "comments": "числа отсутствуют"},
+    {"item": "Технология — CCP описаны", "status": "No", "comments": "qc_checkpoints пусты"},
+    {"item": "Регуляторика — проблемные заявления отмечены", "status": "No", "comments": "allowed/forbidden claims пусты"},
+    {"item": "План валидации — 6 экспериментов", "status": "No", "comments": "только 1 тест без KPI и бюджета"},
+    {"item": "Все допущения отмечены [ПРЕДПОЛОЖЕНИЕ]", "status": "No", "comments": "пометки отсутствуют"},
+    {"item": "Риски описаны", "status": "No", "comments": "только 1 риск без probability/impact"},
+    {"item": "Приложения — шаблоны", "status": "No", "comments": "appendices пусты"},
+    {"item": "JSON валиден по passport_schema.json (Ajv)", "status": "No", "comments": "AUTO: quick_fix типы исправлены — требует повторной проверки"}
+  ]
+}
