@@ -1,0 +1,297 @@
+{
+  "$id": "https://example.com/ksp.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["short_passport","cognitive_block","sensory_block","branding","marketing","production","regulatory","commerce","validation_plan","appendices","sign_off_checklist"],
+  "properties": {
+    "short_passport": {
+      "type": "object",
+      "required": ["category","name","audience","pain","uniqueness"],
+      "properties": {
+        "category":{"type":"string"},
+        "name":{"type":"string"},
+        "audience":{"type":"string"},
+        "pain":{"type":"string"},
+        "uniqueness":{"type":"string"},
+        "portion_g":{"type":"number"},
+        "protein_per_portion_g":{"type":"number"},
+        "calories_per_portion_kcal":{"type":"number"},
+        "rrc_rub":{"type":["number","string"]},
+        "one_liner":{"type":"string"},
+        "source_evidence_assumptions":{"type":"string"}
+      }
+    },
+
+    "cognitive_block": {
+      "type":"object",
+      "required":["consumption_change","rituals","narratives","desired_model","education"],
+      "properties":{
+        "consumption_change":{"type":"array","items":{"type":"string"}},
+        "rituals":{"type":"array","items":{"type":"string"}},
+        "narratives":{"type":"array","items":{"type":"string"}},
+        "desired_model":{
+          "type":"object",
+          "required":["thoughts","feelings","behaviors"],
+          "properties":{
+            "thoughts":{"type":"array","items":{"type":"string"}},
+            "feelings":{"type":"array","items":{"type":"string"}},
+            "behaviors":{"type":"array","items":{"type":"string"}}
+          }
+        },
+        "education":{"type":"array","items":{"type":"string"}},
+        "source_evidence_assumptions":{"type":"string"}
+      }
+    },
+
+    "sensory_block": {
+      "type":"object",
+      "required":["visual","audio","smell","tactile","taste"],
+      "properties":{
+        "visual": {
+          "type":"object",
+          "properties":{
+            "desired_experience":{"type":"string"},
+            "measurable_goal":{"type":"string"},
+            "protocol_test":{"type":["object","array"]},
+            "analysis_method":{"type":"string"},
+            "acceptance_criteria":{"type":"string"},
+            "recommendations":{"type":"array","items":{"type":"string"}}
+          }
+        },
+        "audio": {
+          "type":"object",
+          "properties":{
+            "desired_experience":{"type":"string"},
+            "measurable_goal":{"type":"string"},
+            "protocol_test":{"type":["object","array"]},
+            "analysis_method":{"type":"string"},
+            "acceptance_criteria":{"type":"string"},
+            "recommendations":{"type":"array","items":{"type":"string"}}
+          }
+        },
+        "smell": {
+          "type":"object",
+          "properties":{
+            "desired_experience":{"type":"string"},
+            "measurable_goal":{"type":"string"},
+            "protocol_test":{"type":["object","array"]},
+            "analysis_method":{"type":"string"},
+            "acceptance_criteria":{"type":"string"},
+            "recommendations":{"type":"array","items":{"type":"string"}}
+          }
+        },
+        "tactile": {
+          "type":"object",
+          "properties":{
+            "desired_experience":{"type":"string"},
+            "measurable_goal":{"type":"string"},
+            "protocol_test":{"type":["object","array"]},
+            "analysis_method":{"type":"string"},
+            "acceptance_criteria":{"type":"string"},
+            "recommendations":{"type":"array","items":{"type":"string"}}
+          }
+        },
+        "taste": {
+          "type":"object",
+          "properties":{
+            "desired_experience":{"type":"string"},
+            "measurable_goal":{"type":"string"},
+            "protocol_test":{"type":["object","array"]},
+            "analysis_method":{"type":"string"},
+            "acceptance_criteria":{"type":"string"},
+            "recommendations":{"type":"array","items":{"type":"string"}}
+          }
+        },
+        "source_evidence_assumptions":{"type":"string"}
+      }
+    },
+
+    "branding": {
+      "type":"object",
+      "required":["story","promise","brand_core","context","customer_journey"],
+      "properties":{
+        "story":{"type":"string"},
+        "promise":{"type":"string"},
+        "brand_core":{"type":"array","items":{"type":"string"}},
+        "context":{
+          "type":"object",
+          "properties":{
+            "favorable":{"type":"array","items":{"type":"string"}},
+            "unfavorable":{"type":"array","items":{"type":"string"}}
+          }
+        },
+        "customer_journey":{"type":"array","items":{"type":"string"}},
+        "source_evidence_assumptions":{"type":"string"}
+      }
+    },
+
+    "marketing": {
+      "type":"object",
+      "required":["segments","product_spec","pricing","channels","promotional_tactics"],
+      "properties":{
+        "segments":{
+          "type":"array",
+          "items":{
+            "type":"object",
+            "properties":{
+              "segment":{"type":"string"},
+              "need":{"type":"string"},
+              "channels":{"type":"array","items":{"type":"string"}}
+            },
+            "required":["segment","need"]
+          }
+        },
+        "product_spec":{"type":"object"},
+        "pricing":{"type":"object"},
+        "channels":{"type":"array","items":{"type":"string"}},
+        "promotional_tactics":{"type":"array","items":{"type":"string"}},
+        "source_evidence_assumptions":{"type":"string"}
+      }
+    },
+
+    "production": {
+      "type":"object",
+      "required":["technology_process_steps","qc_checkpoints","shelf_life_days","packaging_spec"],
+      "properties":{
+        "technology_process_steps":{
+          "type":"array",
+          "items":{
+            "type":"object",
+            "properties":{
+              "step":{"type":"string"},
+              "detail":{"type":"string"},
+              "ccp":{"type":"string"}
+            },
+            "required":["step"]
+          }
+        },
+        "qc_checkpoints":{
+          "type":"array",
+          "items":{"type":"object"}
+        },
+        "shelf_life_days":{"type":"number"},
+        "shelf_life_method":{"type":"string"},
+        "packaging_spec":{
+          "type":"object",
+          "properties":{
+            "material":{"type":"string"},
+            "o2_transmission_rate":{"type":"string"},
+            "moisture_transmission":{"type":"string"},
+            "seal_strength":{"type":"string"}
+          }
+        },
+        "microbiology_limits":{"type":"object"},
+        "production_constraints":{"type":"array","items":{"type":"string"}},
+        "source_evidence_assumptions":{"type":"string"}
+      }
+    },
+
+    "regulatory": {
+      "type":"object",
+      "properties":{
+        "allowed_claims":{"type":"array","items":{"type":"string"}},
+        "forbidden_claims":{"type":"array","items":{"type":"string"}},
+        "labeling_requirements":{"type":"array","items":{"type":"string"}},
+        "legal_notes":{"type":"string"},
+        "source_evidence_assumptions":{"type":"string"}
+      }
+    },
+
+    "commerce": {
+      "type":"object",
+      "properties":{
+        "unit_economics":{
+          "type":"object",
+          "properties":{
+            "raw_material_cost_rub_per_unit":{"type":"number"},
+            "packaging_cost_rub_per_unit":{"type":"number"},
+            "production_cost_rub_per_unit":{"type":"number"},
+            "logistics_rub_per_unit":{"type":"number"},
+            "opex_alloc_rub_per_unit":{"type":"number"},
+            "cost_per_unit_rub":{"type":"number"},
+            "rrc_assumed_rub":{"type":"number"},
+            "gross_margin_percent":{"type":["number","string"]},
+            "notes":{"type":"string"}
+          }
+        },
+        "pricing_models":{"type":"array","items":{"type":"object"}},
+        "cac_target_rub":{"type":"number"},
+        "ltv_target_rub":{"type":"number"},
+        "break_even_volume_months":{"type":["number","string"]},
+        "source_evidence_assumptions":{"type":"string"}
+      }
+    },
+
+    "validation_plan": {
+      "type":"array",
+      "items":{
+        "type":"object",
+        "required":["name","hypothesis","method","kpi"],
+        "properties":{
+          "name":{"type":"string"},
+          "hypothesis":{"type":"string"},
+          "method":{"type":"string"},
+          "kpi":{"type":"string"},
+          "threshold":{"type":"string"},
+          "duration_days":{"type":"number"},
+          "budget_rub":{"type":["number","string"]}
+        }
+      }
+    },
+
+    "risks": {
+      "type":"array",
+      "items":{
+        "type":"object",
+        "properties":{
+          "risk":{"type":"string"},
+          "probability":{"type":"string"},
+          "impact":{"type":"string"},
+          "mitigation":{"type":"string"}
+        },
+        "required":["risk"]
+      }
+    },
+
+    "appendices": {
+      "type":"object",
+      "properties":{
+        "sensory_protocol_template":{"type":"object"},
+        "product_card_example":{"type":"object"},
+        "unit_economics_template":{"type":"string"},
+        "qa_checklist_template":{"type":"array","items":{"type":"string"}}
+      }
+    },
+
+    "sign_off_checklist": {
+      "type":"array",
+      "items":{
+        "type":"object",
+        "properties":{
+          "item":{"type":"string"},
+          "status":{"type":"string","enum":["Yes","No","N/A"]},
+          "comments":{"type":"string"}
+        },
+        "required":["item","status"]
+      }
+    },
+
+    "required_data": {
+      "type":"array",
+      "items":{
+        "type":"object",
+        "properties":{
+          "param":{"type":"string"},
+          "unit":{"type":"string"},
+          "recommended":{"type":"string"}
+        },
+        "required":["param"]
+      }
+    },
+
+    "source_overall":{"type":"string"},
+    "notes":{"type":"string"}
+  },
+
+  "additionalProperties": true
+}
