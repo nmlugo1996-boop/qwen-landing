@@ -7,6 +7,12 @@ import { NextResponse } from "next/server";
 const QWEN_API_URL = process.env.QWEN_API_URL || "https://openrouter.ai/api/v1/chat/completions";
 const TEXT_MODEL_NAME = process.env.TEXT_MODEL_NAME || "qwen/qwen3.5-plus-02-15";
 
+// env-configurable defaults for tokens/temperature
+const DRAFT_TEMPERATURE = parseFloat(process.env.DRAFT_TEMPERATURE ?? "0.7");
+const DRAFT_MAX_TOKENS = parseInt(process.env.DRAFT_MAX_TOKENS ?? "3000", 10);
+const REFINE_TEMPERATURE = parseFloat(process.env.REFINE_TEMPERATURE ?? "0.2");
+const REFINE_MAX_TOKENS = parseInt(process.env.REFINE_MAX_TOKENS ?? "2000", 10);
+
 /**
  * Send request to OpenRouter / Qwen
  * returns { text, raw } where text is assistant text
@@ -63,6 +69,25 @@ export async function POST(req) {
     const input = await req.json().catch(() => ({}));
     const { industry, idea, pain, audience, extra } = input;
 
+    // per-request overrides for draft/refine (optional)
+    const draftOverrides = (input && input.draft) || {};
+    const refineOverrides = (input && input.refine) || {};
+
+    // resolve effective draft/refine settings (request overrides take priority over env defaults)
+    const draftTemperature = (typeof draftOverrides.temperature === "number")
+      ? draftOverrides.temperature
+      : DRAFT_TEMPERATURE;
+    const draftMaxTokens = (draftOverrides.max_tokens !== undefined)
+      ? parseInt(draftOverrides.max_tokens, 10)
+      : DRAFT_MAX_TOKENS;
+
+    const refineTemperature = (typeof refineOverrides.temperature === "number")
+      ? refineOverrides.temperature
+      : REFINE_TEMPERATURE;
+    const refineMaxTokens = (refineOverrides.max_tokens !== undefined)
+      ? parseInt(refineOverrides.max_tokens, 10)
+      : REFINE_MAX_TOKENS;
+
     // load system prompt
     const baseDir = process.cwd();
     const promptPath = path.join(baseDir, "polar-star-passports", "passport_prompt.txt");
@@ -97,8 +122,8 @@ extra: ${extra || ""}
       { role: "user", content: userInstruction },
     ];
 
-    // 1) Draft — креативный черновик
-    const draft = await requestModel(messages, { temperature: 0.7, max_tokens: 3000 }, OPENROUTER_API_KEY);
+    // 1) Draft — creative phase
+    const draft = await requestModel(messages, { temperature: draftTemperature, max_tokens: draftMaxTokens }, OPENROUTER_API_KEY);
     console.log("draft raw:", draft.raw);
     // попытка извлечь json
     let rawJson = extractBetweenMarkers(draft.text);
@@ -109,17 +134,17 @@ extra: ${extra || ""}
         { role: "system", content: systemPrompt },
         { role: "user", content: `В предыдущем ответе не найден JSON между маркерами. Повтори и выдай ТОЛЬКО JSON между ---BEGIN_JSON--- и ---END_JSON---. Предыдущий ответ:\n${draft.text}` }
       ];
-      const repaired = await requestModel(fixPrompt, { temperature: 0.2, max_tokens: 2000 }, OPENROUTER_API_KEY);
+      const repaired = await requestModel(fixPrompt, { temperature: refineTemperature, max_tokens: refineMaxTokens }, OPENROUTER_API_KEY);
       console.log("repaired (no markers) raw:", repaired.raw);
       rawJson = extractBetweenMarkers(repaired.text);
       if (!rawJson) {
         return NextResponse.json({ error: "Не удалось извлечь JSON из ответа модели (нет маркеров)" }, { status: 500 });
       }
-      return await validateAndRefine(rawJson, draft.text, systemPrompt, OPENROUTER_API_KEY);
+      return await validateAndRefine(rawJson, draft.text, systemPrompt, OPENROUTER_API_KEY, refineTemperature, refineMaxTokens);
     }
 
     // Proceed to validation/refine
-    return await validateAndRefine(rawJson, draft.text, systemPrompt, OPENROUTER_API_KEY);
+    return await validateAndRefine(rawJson, draft.text, systemPrompt, OPENROUTER_API_KEY, refineTemperature, refineMaxTokens);
 
   } catch (err) {
     console.error("POST error:", err);
@@ -127,7 +152,7 @@ extra: ${extra || ""}
   }
 }
 
-async function validateAndRefine(rawJson, draftText, systemPrompt, apiKey = "") {
+async function validateAndRefine(rawJson, draftText, systemPrompt, apiKey = "", refineTemperature = REFINE_TEMPERATURE, refineMaxTokens = REFINE_MAX_TOKENS) {
   const baseDir = process.cwd();
   const schemaPath = path.join(baseDir, "polar-star-passports", "passport_schema.json");
   if (!fs.existsSync(schemaPath)) {
@@ -147,7 +172,7 @@ async function validateAndRefine(rawJson, draftText, systemPrompt, apiKey = "") 
       { role: "system", content: systemPrompt },
       { role: "user", content: `JSON ниже некорректен (синтаксическая ошибка). Исправь его и выдай ТОЛЬКО исправный JSON между маркерами ---BEGIN_JSON--- и ---END_JSON---.\n\n${rawJson}` }
     ];
-    const repaired = await requestModel(repairPrompt, { temperature: 0.2, max_tokens: 2000 }, apiKey);
+    const repaired = await requestModel(repairPrompt, { temperature: refineTemperature, max_tokens: refineMaxTokens }, apiKey);
     console.log("repair raw:", repaired.raw);
     const fixed = extractBetweenMarkers(repaired.text);
     if (!fixed) {
@@ -173,7 +198,7 @@ async function validateAndRefine(rawJson, draftText, systemPrompt, apiKey = "") 
       { role: "assistant", content: `Черновик (markdown):\n${draftText}` },
       { role: "user", content: `JSON ниже не проходит валидацию по схеме: ${errors}. Исправь и дополни JSON, чтобы он соответствовал схеме. Выдай ТОЛЬКО JSON между маркерами ---BEGIN_JSON--- и ---END_JSON---.` }
     ];
-    const refined = await requestModel(refinePrompt, { temperature: 0.2, max_tokens: 2000 }, apiKey);
+    const refined = await requestModel(refinePrompt, { temperature: refineTemperature, max_tokens: refineMaxTokens }, apiKey);
     console.log("refined raw:", refined.raw);
     const refinedRaw = extractBetweenMarkers(refined.text);
     if (!refinedRaw) {
@@ -196,7 +221,7 @@ async function validateAndRefine(rawJson, draftText, systemPrompt, apiKey = "") 
     { role: "system", content: systemPrompt },
     { role: "user", content: `На основе этого JSON сгенерируй человеко-читаемый КСП в Markdown (заголовки, таблицы). Сначала повтори JSON между маркерами ---BEGIN_JSON--- и ---END_JSON---, затем Markdown.\nJSON:\n${JSON.stringify(parsed, null, 2)}` }
   ];
-  const final = await requestModel(toMarkdownPrompt, { temperature: 0.2, max_tokens: 2000 }, apiKey);
+  const final = await requestModel(toMarkdownPrompt, { temperature: refineTemperature, max_tokens: refineMaxTokens }, apiKey);
   console.log("final raw:", final.raw);
 
   // extract again final JSON if present, else use parsed
