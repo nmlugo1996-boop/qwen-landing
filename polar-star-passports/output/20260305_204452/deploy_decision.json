@@ -1,0 +1,35 @@
+{
+  "timestamp": "20260305_204452",
+  "BLOCK_DEPLOY": true,
+  "reasons": [
+    {
+      "check": "json_validation",
+      "status": "FAILED",
+      "detail": "good_passport.json: 21 ошибка. Схема обновилась (новые required поля: production, regulatory, commerce, validation_plan, appendices, sign_off_checklist). cognitive_block и sensory_block используют старый формат (numbered keys вместо flat arrays).",
+      "fix": "Обновить good_passport.json под новую passport_schema.json"
+    },
+    {
+      "check": "json_validation",
+      "status": "FAILED",
+      "detail": "bad_passport.json: 17 ошибок. Типы: thoughts/behaviors/education — строки вместо массивов; sensory sub-blocks — массивы вместо объектов; отсутствует sign_off_checklist.",
+      "fix": "bad_passport.json — это намеренно плохой пример. Но он тоже должен иметь верные типы (чтобы показывать 'плохое содержание', а не 'невалидный JSON'). Исправить типы данных."
+    },
+    {
+      "check": "md_critical_sections",
+      "status": "FAILED",
+      "detail": "meatcode.md: отсутствуют секции Производство, Коммерция, План валидации, Приложения, SIGN-OFF CHECKLIST (5 из 10 required).",
+      "fix": "Добавить недостающие секции в meatcode.md или пометить как MEDIUM (не FULL)."
+    },
+    {
+      "check": "docx_conversion",
+      "status": "BLOCKED",
+      "detail": "shokovsyanka_march_2026.docx: mammoth не установлен, MD не создан.",
+      "fix": "npm install mammoth turndown --no-audit --no-fund && конвертировать (команды в docx_report.json)"
+    }
+  ],
+  "npm_test_failed": false,
+  "npm_test_skipped": true,
+  "npm_test_note": "test script отсутствует в package.json",
+  "npm_build_skipped": true,
+  "npm_build_note": "build не запускается при BLOCK_DEPLOY=true"
+}

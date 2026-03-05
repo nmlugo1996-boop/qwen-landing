@@ -1,0 +1,12 @@
+{
+  "files_found": ["polar-star-passports/reference/shokovsyanka_march_2026.docx"],
+  "converted": [],
+  "docx_unparsed": ["polar-star-passports/reference/shokovsyanka_march_2026.docx"],
+  "corresponding_md_exists": false,
+  "status": "BLOCKED",
+  "reason": "mammoth и turndown не установлены. Соответствующего .md файла для shokovsyanka нет.",
+  "fix_commands": [
+    "npm install mammoth turndown --no-audit --no-fund",
+    "node -e \"const mammoth=require('mammoth');const td=new (require('turndown'))();mammoth.extractRawText({path:'polar-star-passports/reference/shokovsyanka_march_2026.docx'}).then(r=>require('fs').writeFileSync('polar-star-passports/reference/shokovsyanka_march_2026.md',td.turndown(r.value)))\""
+  ]
+}

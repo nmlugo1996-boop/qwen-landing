@@ -1,0 +1,98 @@
+[
+    {
+        "path":  "polar-star-passports/passport_prompt.txt",
+        "size":  16592,
+        "mtime":  "2026-03-05T19:59:09.2443528+03:00",
+        "type":  ".txt"
+    },
+    {
+        "path":  "polar-star-passports/passport_schema.json",
+        "size":  10243,
+        "mtime":  "2026-03-05T20:17:30.3192860+03:00",
+        "type":  ".json"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/book_v2_excerpt.md",
+        "size":  4790,
+        "mtime":  "2026-03-02T13:32:07.9678478+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/car_future_example.md",
+        "size":  6379,
+        "mtime":  "2026-03-02T13:32:07.2586798+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/cosmo_sausage_example.md",
+        "size":  1285,
+        "mtime":  "2026-03-02T13:32:07.3006837+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/form_template.md",
+        "size":  2890,
+        "mtime":  "2026-03-02T13:32:08.0118508+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/kids_breakfast_example.md",
+        "size":  12899,
+        "mtime":  "2026-03-02T13:32:07.3466873+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/miau_example.md",
+        "size":  6830,
+        "mtime":  "2026-03-02T13:32:08.0514728+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/novaboost_energy.md",
+        "size":  6245,
+        "mtime":  "2026-03-02T13:32:07.3896896+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/photon_example.md",
+        "size":  2834,
+        "mtime":  "2026-03-02T13:32:07.4306927+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/smartphone_future_example.md",
+        "size":  5601,
+        "mtime":  "2026-03-02T13:32:07.5157015+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/archives/old_references/smart_drink_example.md",
+        "size":  1349,
+        "mtime":  "2026-03-02T13:32:07.4726986+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/examples/bad_passport.json",
+        "size":  2822,
+        "mtime":  "2026-03-05T20:06:12.8147312+03:00",
+        "type":  ".json"
+    },
+    {
+        "path":  "polar-star-passports/examples/good_passport.json",
+        "size":  41482,
+        "mtime":  "2026-03-05T20:05:26.0050018+03:00",
+        "type":  ".json"
+    },
+    {
+        "path":  "polar-star-passports/reference/meatcode.md",
+        "size":  26772,
+        "mtime":  "2026-03-05T20:30:45.9805060+03:00",
+        "type":  ".md"
+    },
+    {
+        "path":  "polar-star-passports/reference/shokovsyanka_march_2026.docx",
+        "size":  237188,
+        "mtime":  "2026-03-04T12:00:03.5760058+03:00",
+        "type":  ".docx"
+    }
+]
