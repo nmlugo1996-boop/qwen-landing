@@ -1,0 +1,160 @@
+{
+  "file": "polar-star-passports/examples/bad_passport.json",
+  "valid": false,
+  "error_count": 17,
+  "errors": [
+    {
+      "instancePath": "",
+      "schemaPath": "#/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "sign_off_checklist"
+      },
+      "message": "must have required property 'sign_off_checklist'"
+    },
+    {
+      "instancePath": "/cognitive_block/desired_model/thoughts",
+      "schemaPath": "#/properties/cognitive_block/properties/desired_model/properties/thoughts/type",
+      "keyword": "type",
+      "params": {
+        "type": "array"
+      },
+      "message": "must be array"
+    },
+    {
+      "instancePath": "/cognitive_block/desired_model/behaviors",
+      "schemaPath": "#/properties/cognitive_block/properties/desired_model/properties/behaviors/type",
+      "keyword": "type",
+      "params": {
+        "type": "array"
+      },
+      "message": "must be array"
+    },
+    {
+      "instancePath": "/cognitive_block/education",
+      "schemaPath": "#/properties/cognitive_block/properties/education/type",
+      "keyword": "type",
+      "params": {
+        "type": "array"
+      },
+      "message": "must be array"
+    },
+    {
+      "instancePath": "/sensory_block/visual",
+      "schemaPath": "#/properties/sensory_block/properties/visual/type",
+      "keyword": "type",
+      "params": {
+        "type": "object"
+      },
+      "message": "must be object"
+    },
+    {
+      "instancePath": "/sensory_block/audio",
+      "schemaPath": "#/properties/sensory_block/properties/audio/type",
+      "keyword": "type",
+      "params": {
+        "type": "object"
+      },
+      "message": "must be object"
+    },
+    {
+      "instancePath": "/sensory_block/smell",
+      "schemaPath": "#/properties/sensory_block/properties/smell/type",
+      "keyword": "type",
+      "params": {
+        "type": "object"
+      },
+      "message": "must be object"
+    },
+    {
+      "instancePath": "/sensory_block/tactile",
+      "schemaPath": "#/properties/sensory_block/properties/tactile/type",
+      "keyword": "type",
+      "params": {
+        "type": "object"
+      },
+      "message": "must be object"
+    },
+    {
+      "instancePath": "/sensory_block/taste",
+      "schemaPath": "#/properties/sensory_block/properties/taste/type",
+      "keyword": "type",
+      "params": {
+        "type": "object"
+      },
+      "message": "must be object"
+    },
+    {
+      "instancePath": "/branding/brand_core",
+      "schemaPath": "#/properties/branding/properties/brand_core/type",
+      "keyword": "type",
+      "params": {
+        "type": "array"
+      },
+      "message": "must be array"
+    },
+    {
+      "instancePath": "/marketing/product_spec",
+      "schemaPath": "#/properties/marketing/properties/product_spec/type",
+      "keyword": "type",
+      "params": {
+        "type": "object"
+      },
+      "message": "must be object"
+    },
+    {
+      "instancePath": "/marketing/pricing",
+      "schemaPath": "#/properties/marketing/properties/pricing/type",
+      "keyword": "type",
+      "params": {
+        "type": "object"
+      },
+      "message": "must be object"
+    },
+    {
+      "instancePath": "/production",
+      "schemaPath": "#/properties/production/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "technology_process_steps"
+      },
+      "message": "must have required property 'technology_process_steps'"
+    },
+    {
+      "instancePath": "/production",
+      "schemaPath": "#/properties/production/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "qc_checkpoints"
+      },
+      "message": "must have required property 'qc_checkpoints'"
+    },
+    {
+      "instancePath": "/production",
+      "schemaPath": "#/properties/production/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "shelf_life_days"
+      },
+      "message": "must have required property 'shelf_life_days'"
+    },
+    {
+      "instancePath": "/production",
+      "schemaPath": "#/properties/production/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "packaging_spec"
+      },
+      "message": "must have required property 'packaging_spec'"
+    },
+    {
+      "instancePath": "/regulatory/labeling_requirements",
+      "schemaPath": "#/properties/regulatory/properties/labeling_requirements/type",
+      "keyword": "type",
+      "params": {
+        "type": "array"
+      },
+      "message": "must be array"
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+{
+  "file": "polar-star-passports/examples/good_passport.json",
+  "valid": false,
+  "error_count": 21,
+  "errors": [
+    {
+      "instancePath": "/cognitive_block",
+      "schemaPath": "#/properties/cognitive_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "consumption_change"
+      },
+      "message": "must have required property 'consumption_change'"
+    },
+    {
+      "instancePath": "/cognitive_block",
+      "schemaPath": "#/properties/cognitive_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "rituals"
+      },
+      "message": "must have required property 'rituals'"
+    },
+    {
+      "instancePath": "/cognitive_block",
+      "schemaPath": "#/properties/cognitive_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "narratives"
+      },
+      "message": "must have required property 'narratives'"
+    },
+    {
+      "instancePath": "/cognitive_block",
+      "schemaPath": "#/properties/cognitive_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "desired_model"
+      },
+      "message": "must have required property 'desired_model'"
+    },
+    {
+      "instancePath": "/cognitive_block",
+      "schemaPath": "#/properties/cognitive_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "education"
+      },
+      "message": "must have required property 'education'"
+    },
+    {
+      "instancePath": "/sensory_block",
+      "schemaPath": "#/properties/sensory_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "visual"
+      },
+      "message": "must have required property 'visual'"
+    },
+    {
+      "instancePath": "/sensory_block",
+      "schemaPath": "#/properties/sensory_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "audio"
+      },
+      "message": "must have required property 'audio'"
+    },
+    {
+      "instancePath": "/sensory_block",
+      "schemaPath": "#/properties/sensory_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "smell"
+      },
+      "message": "must have required property 'smell'"
+    },
+    {
+      "instancePath": "/sensory_block",
+      "schemaPath": "#/properties/sensory_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "tactile"
+      },
+      "message": "must have required property 'tactile'"
+    },
+    {
+      "instancePath": "/sensory_block",
+      "schemaPath": "#/properties/sensory_block/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "taste"
+      },
+      "message": "must have required property 'taste'"
+    },
+    {
+      "instancePath": "/branding",
+      "schemaPath": "#/properties/branding/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "story"
+      },
+      "message": "must have required property 'story'"
+    },
+    {
+      "instancePath": "/branding",
+      "schemaPath": "#/properties/branding/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "promise"
+      },
+      "message": "must have required property 'promise'"
+    },
+    {
+      "instancePath": "/branding",
+      "schemaPath": "#/properties/branding/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "brand_core"
+      },
+      "message": "must have required property 'brand_core'"
+    },
+    {
+      "instancePath": "/branding",
+      "schemaPath": "#/properties/branding/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "context"
+      },
+      "message": "must have required property 'context'"
+    },
+    {
+      "instancePath": "/branding",
+      "schemaPath": "#/properties/branding/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "customer_journey"
+      },
+      "message": "must have required property 'customer_journey'"
+    },
+    {
+      "instancePath": "/marketing",
+      "schemaPath": "#/properties/marketing/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "segments"
+      },
+      "message": "must have required property 'segments'"
+    },
+    {
+      "instancePath": "/marketing",
+      "schemaPath": "#/properties/marketing/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "product_spec"
+      },
+      "message": "must have required property 'product_spec'"
+    },
+    {
+      "instancePath": "/marketing",
+      "schemaPath": "#/properties/marketing/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "pricing"
+      },
+      "message": "must have required property 'pricing'"
+    },
+    {
+      "instancePath": "/marketing",
+      "schemaPath": "#/properties/marketing/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "channels"
+      },
+      "message": "must have required property 'channels'"
+    },
+    {
+      "instancePath": "/marketing",
+      "schemaPath": "#/properties/marketing/required",
+      "keyword": "required",
+      "params": {
+        "missingProperty": "promotional_tactics"
+      },
+      "message": "must have required property 'promotional_tactics'"
+    },
+    {
+      "instancePath": "/sign_off_checklist",
+      "schemaPath": "#/properties/sign_off_checklist/type",
+      "keyword": "type",
+      "params": {
+        "type": "array"
+      },
+      "message": "must be array"
+    }
+  ]
+}

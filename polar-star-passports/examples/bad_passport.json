@@ -1,19 +1,84 @@
 {
-    "short_passport": {
-      "category": "Еда",
-      "name": "Продукт",
-      "audience": "",
-      "pain": "Нет времени",
-      "uniqueness": "Непонятно"
+  "short_passport": {
+    "category": "Еда/Снеки",
+    "name": "Мясной Рывок",
+    "audience": "",
+    "pain": "Люди устали и хотят есть",
+    "uniqueness": "Вкусный и натуральный",
+    "portion": "порция",
+    "protein": "много",
+    "rrc": "дорого"
+  },
+  "cognitive_block": {
+    "consumption_change": ["Ешьте это после тренировки и будете как профи"],
+    "rituals": ["есть в раздевалке", ""],
+    "narratives": ["Мы круче всех", "Настоящее мясо для всех"],
+    "desired_model": {
+      "thoughts": "Должны думать о результате",
+      "feelings": [],
+      "behaviors": ""
     },
-    "cognitive_block": {
-      "consumption_change": ["Ешьте"],
-      "rituals": [],
-      "narratives": [],
-      "desired_model": {"thoughts":[],"feelings":[],"behaviors":[]},
-      "education":[]
+    "education": "Будем снимать видео"
+  },
+  "sensory_block": {
+    "visual": ["красивая упаковка с фото мяса", "большая надпись 20g"],
+    "audio": [],
+    "smell": ["приятный запах мяса", "немного копчености"],
+    "tactile": [],
+    "taste": ["насыщенный вкус", "немного солёного"]
+  },
+  "branding": {
+    "story": "Мы лучшие, потому что настоящие",
+    "promise": "Лучше всех",
+    "brand_core": "аутентичность",
+    "context": {
+      "favorable": [],
+      "unfavorable": []
     },
-    "sensory_block": {"visual":[],"audio":[],"smell":[],"tactile":[],"taste":[]},
-    "branding": {"story":"","promise":"","brand_core":[],"context":{},"customer_journey":[]},
-    "marketing": {"segments":[],"product_spec":"","pricing":"","channels":[],"promotional_tactics":[]}
+    "customer_journey": []
+  },
+  "marketing": {
+    "segments": [],
+    "product_spec": "40гр / 20 белка",
+    "pricing": "150?",
+    "channels": ["соцсети", "какие-то залы"],
+    "promotional_tactics": ["челлендж", "сотрудничество с блогерами"]
+  },
+  "production": {
+    "process": "сделаем как все: перемешать, сформовать, запечь",
+    "ccp": [],
+    "shelf_life": "долго",
+    "packaging": "красивая пленка"
+  },
+  "regulatory": {
+    "allowed_claims": [],
+    "forbidden_claims": [],
+    "labeling_requirements": "укажем белок и дату"
+  },
+  "commerce": {
+    "unit_economics": {
+      "cost": "много",
+      "price": "150"
+    },
+    "cac_target": "надо снизить",
+    "ltv_target": ""
+  },
+  "validation_plan": [
+    {
+      "name": "тест",
+      "hypothesis": "все понравится",
+      "method": "просто раздаём",
+      "kpi": "",
+      "budget": "н/д"
+    }
+  ],
+  "risks": [
+    {"risk": "могут не любить", "mitigation": "сделаем вкуснее"},
+    {"risk": "", "mitigation": ""}
+  ],
+  "appendices": {
+    "sensory_protocol": null,
+    "product_card_example": {},
+    "unit_economics_template": ""
   }
+}
