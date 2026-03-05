@@ -1,0 +1,19 @@
+{
+    "short_passport": {
+      "category": "Еда",
+      "name": "Продукт",
+      "audience": "",
+      "pain": "Нет времени",
+      "uniqueness": "Непонятно"
+    },
+    "cognitive_block": {
+      "consumption_change": ["Ешьте"],
+      "rituals": [],
+      "narratives": [],
+      "desired_model": {"thoughts":[],"feelings":[],"behaviors":[]},
+      "education":[]
+    },
+    "sensory_block": {"visual":[],"audio":[],"smell":[],"tactile":[],"taste":[]},
+    "branding": {"story":"","promise":"","brand_core":[],"context":{},"customer_journey":[]},
+    "marketing": {"segments":[],"product_spec":"","pricing":"","channels":[],"promotional_tactics":[]}
+  }
