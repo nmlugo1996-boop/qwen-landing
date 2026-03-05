@@ -5,18 +5,13 @@ import Ajv from "ajv";
 import { NextResponse } from "next/server";
 
 const QWEN_API_URL = process.env.QWEN_API_URL || "https://openrouter.ai/api/v1/chat/completions";
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const TEXT_MODEL_NAME = process.env.TEXT_MODEL_NAME || "qwen/qwen3.5-plus-02-15";
-
-if (!OPENROUTER_API_KEY) {
-  throw new Error("OPENROUTER_API_KEY is not set. Please add it to env.");
-}
 
 /**
  * Send request to OpenRouter / Qwen
  * returns { text, raw } where text is assistant text
  */
-async function requestModel(messages, opts = { temperature: 0.7, max_tokens: 2000 }) {
+async function requestModel(messages, opts = { temperature: 0.7, max_tokens: 2000 }, apiKey = "") {
   const body = {
     model: TEXT_MODEL_NAME,
     messages,
@@ -28,7 +23,7 @@ async function requestModel(messages, opts = { temperature: 0.7, max_tokens: 200
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
   });
@@ -60,6 +55,11 @@ function safeParseJson(s) {
 
 export async function POST(req) {
   try {
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY) {
+      return NextResponse.json({ error: "OPENROUTER_API_KEY is not set. Please add it to .env.local" }, { status: 500 });
+    }
+
     const input = await req.json().catch(() => ({}));
     const { industry, idea, pain, audience, extra } = input;
 
@@ -98,7 +98,7 @@ extra: ${extra || ""}
     ];
 
     // 1) Draft — креативный черновик
-    const draft = await requestModel(messages, { temperature: 0.7, max_tokens: 3000 });
+    const draft = await requestModel(messages, { temperature: 0.7, max_tokens: 3000 }, OPENROUTER_API_KEY);
     console.log("draft raw:", draft.raw);
     // попытка извлечь json
     let rawJson = extractBetweenMarkers(draft.text);
@@ -109,18 +109,17 @@ extra: ${extra || ""}
         { role: "system", content: systemPrompt },
         { role: "user", content: `В предыдущем ответе не найден JSON между маркерами. Повтори и выдай ТОЛЬКО JSON между ---BEGIN_JSON--- и ---END_JSON---. Предыдущий ответ:\n${draft.text}` }
       ];
-      const repaired = await requestModel(fixPrompt, { temperature: 0.2, max_tokens: 2000 });
+      const repaired = await requestModel(fixPrompt, { temperature: 0.2, max_tokens: 2000 }, OPENROUTER_API_KEY);
       console.log("repaired (no markers) raw:", repaired.raw);
       rawJson = extractBetweenMarkers(repaired.text);
       if (!rawJson) {
         return NextResponse.json({ error: "Не удалось извлечь JSON из ответа модели (нет маркеров)" }, { status: 500 });
       }
-      // continue with rawJson
-      return await validateAndRefine(rawJson, draft.text, systemPrompt);
+      return await validateAndRefine(rawJson, draft.text, systemPrompt, OPENROUTER_API_KEY);
     }
 
     // Proceed to validation/refine
-    return await validateAndRefine(rawJson, draft.text, systemPrompt);
+    return await validateAndRefine(rawJson, draft.text, systemPrompt, OPENROUTER_API_KEY);
 
   } catch (err) {
     console.error("POST error:", err);
@@ -128,7 +127,7 @@ extra: ${extra || ""}
   }
 }
 
-async function validateAndRefine(rawJson, draftText, systemPrompt) {
+async function validateAndRefine(rawJson, draftText, systemPrompt, apiKey = "") {
   const baseDir = process.cwd();
   const schemaPath = path.join(baseDir, "polar-star-passports", "passport_schema.json");
   if (!fs.existsSync(schemaPath)) {
@@ -148,7 +147,7 @@ async function validateAndRefine(rawJson, draftText, systemPrompt) {
       { role: "system", content: systemPrompt },
       { role: "user", content: `JSON ниже некорректен (синтаксическая ошибка). Исправь его и выдай ТОЛЬКО исправный JSON между маркерами ---BEGIN_JSON--- и ---END_JSON---.\n\n${rawJson}` }
     ];
-    const repaired = await requestModel(repairPrompt, { temperature: 0.2, max_tokens: 2000 });
+    const repaired = await requestModel(repairPrompt, { temperature: 0.2, max_tokens: 2000 }, apiKey);
     console.log("repair raw:", repaired.raw);
     const fixed = extractBetweenMarkers(repaired.text);
     if (!fixed) {
@@ -174,7 +173,7 @@ async function validateAndRefine(rawJson, draftText, systemPrompt) {
       { role: "assistant", content: `Черновик (markdown):\n${draftText}` },
       { role: "user", content: `JSON ниже не проходит валидацию по схеме: ${errors}. Исправь и дополни JSON, чтобы он соответствовал схеме. Выдай ТОЛЬКО JSON между маркерами ---BEGIN_JSON--- и ---END_JSON---.` }
     ];
-    const refined = await requestModel(refinePrompt, { temperature: 0.2, max_tokens: 2000 });
+    const refined = await requestModel(refinePrompt, { temperature: 0.2, max_tokens: 2000 }, apiKey);
     console.log("refined raw:", refined.raw);
     const refinedRaw = extractBetweenMarkers(refined.text);
     if (!refinedRaw) {
@@ -197,7 +196,7 @@ async function validateAndRefine(rawJson, draftText, systemPrompt) {
     { role: "system", content: systemPrompt },
     { role: "user", content: `На основе этого JSON сгенерируй человеко-читаемый КСП в Markdown (заголовки, таблицы). Сначала повтори JSON между маркерами ---BEGIN_JSON--- и ---END_JSON---, затем Markdown.\nJSON:\n${JSON.stringify(parsed, null, 2)}` }
   ];
-  const final = await requestModel(toMarkdownPrompt, { temperature: 0.2, max_tokens: 2000 });
+  const final = await requestModel(toMarkdownPrompt, { temperature: 0.2, max_tokens: 2000 }, apiKey);
   console.log("final raw:", final.raw);
 
   // extract again final JSON if present, else use parsed
