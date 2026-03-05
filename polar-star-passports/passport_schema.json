@@ -1,0 +1,71 @@
+{
+    "$id": "https://example.com/ksp.schema.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["short_passport","cognitive_block","sensory_block","branding","marketing"],
+    "properties": {
+      "short_passport": {
+        "type": "object",
+        "required": ["category","name","audience","pain","uniqueness"],
+        "properties": {
+          "category":{"type":"string"},
+          "name":{"type":"string"},
+          "audience":{"type":"string"},
+          "pain":{"type":"string"},
+          "uniqueness":{"type":"string"}
+        }
+      },
+      "cognitive_block": {
+        "type":"object",
+        "required":["consumption_change","rituals","narratives","desired_model","education"],
+        "properties":{
+          "consumption_change":{"type":"array","items":{"type":"string"}},
+          "rituals":{"type":"array","items":{"type":"string"}},
+          "narratives":{"type":"array","items":{"type":"string"}},
+          "desired_model":{
+            "type":"object",
+            "properties":{
+              "thoughts":{"type":"array","items":{"type":"string"}},
+              "feelings":{"type":"array","items":{"type":"string"}},
+              "behaviors":{"type":"array","items":{"type":"string"}}
+            },
+            "required":["thoughts","feelings","behaviors"]
+          },
+          "education":{"type":"array","items":{"type":"string"}}
+        }
+      },
+      "sensory_block":{
+        "type":"object",
+        "required":["visual","audio","smell","tactile","taste"],
+        "properties":{
+          "visual":{"type":"array","items":{"type":"string"}},
+          "audio":{"type":"array","items":{"type":"string"}},
+          "smell":{"type":"array","items":{"type":"string"}},
+          "tactile":{"type":"array","items":{"type":"string"}},
+          "taste":{"type":"array","items":{"type":"string"}}
+        }
+      },
+      "branding":{
+        "type":"object",
+        "required":["story","promise","brand_core","context","customer_journey"],
+        "properties":{
+          "story":{"type":"string"},
+          "promise":{"type":"string"},
+          "brand_core":{"type":"array","items":{"type":"string"}},
+          "context":{"type":"object"},
+          "customer_journey":{"type":"array","items":{"type":"string"}}
+        }
+      },
+      "marketing":{
+        "type":"object",
+        "required":["segments","product_spec","pricing","channels","promotional_tactics"],
+        "properties":{
+          "segments":{"type":"array","items":{"type":"object"}},
+          "product_spec":{"type":"string"},
+          "pricing":{"type":"string"},
+          "channels":{"type":"array","items":{"type":"string"}},
+          "promotional_tactics":{"type":"array","items":{"type":"string"}}
+        }
+      }
+    }
+  }
