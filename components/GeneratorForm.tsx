@@ -205,7 +205,6 @@ type FormState = {
   name: string;
   comment: string;
   uniqueness: string;
-  temperature: number;
   pain: string;
   audience: AudienceSets;
   diagnostics: Record<string, DiagnosticAnswer>;
@@ -261,7 +260,6 @@ const createInitialForm = (): FormState => ({
   name: "",
   comment: "",
   uniqueness: "",
-  temperature: 0.7,
   pain: "",
   audience: {
     age: new Set<string>(),
@@ -339,18 +337,12 @@ export default function GeneratorForm({
         : typeof initialDraft?.comment === "number"
         ? String(initialDraft.comment)
         : "";
-    const temperature =
-      typeof initialDraft?.temperature === "number"
-        ? Math.min(1, Math.max(0, initialDraft.temperature))
-        : 0.7;
-
     setForm({
       category: preparedCategory,
       categoryCustom: "",
       name: header?.name ?? "",
       comment,
       uniqueness,
-      temperature,
       pain: header?.pain ?? "",
       audience,
       diagnostics: sanitizeDiagnostics(initialDraft?.diagnostics)
@@ -505,7 +497,7 @@ export default function GeneratorForm({
             comment: form.comment.trim() || undefined,
             name: form.name.trim() || undefined,
             uniqueness: form.uniqueness.trim() || undefined,
-            temperature: Number(form.temperature),
+            temperature: 0.7,
             diagnostics: form.diagnostics,
             include,
             projectId: projectId || undefined
@@ -542,7 +534,6 @@ export default function GeneratorForm({
       form.diagnostics,
       form.name,
       form.pain,
-      form.temperature,
       form.uniqueness,
       onDraftGenerated,
       projectId
@@ -627,32 +618,7 @@ export default function GeneratorForm({
         />
       </div>
 
-      <div className="flex flex-col gap-2 rounded-2xl bg-white/60 backdrop-blur-sm p-4 md:p-5">
-        <label
-          className="text-xs md:text-sm font-semibold uppercase tracking-wide text-neutral-600"
-          htmlFor="temperature"
-        >
-          Креативность
-        </label>
-        <p className="text-xs text-neutral-500">
-          Задайте уровень креативности
-        </p>
-        <input
-          id="temperature"
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={form.temperature}
-          onChange={(event) =>
-            updateField(
-              "temperature",
-              Number(event.target.value) as FormState["temperature"]
-            )
-          }
-          className="accent-[#ff4d4f]"
-        />
-      </div>
+      {/* Creativity slider removed — draft temperature is fixed at 0.7 */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div
