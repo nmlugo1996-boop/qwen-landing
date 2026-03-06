@@ -1,3 +1,4 @@
+// app/api/passport-docx/route.ts
 import { draftToDocxBinary } from "../../../lib/passportDocx";
 
 export const runtime = "nodejs";
@@ -14,9 +15,18 @@ export async function POST(req: Request) {
       );
     }
 
+    // Лог: длина сериализованного draft и превью (первые 400 символов)
+    try {
+      const raw = JSON.stringify(draft);
+      console.log(`[passport-docx] draft length=${raw.length}`);
+      console.log(`[passport-docx] draft preview=${raw.slice(0, 400)}`);
+    } catch (e) {
+      console.warn("[passport-docx] cannot stringify draft for preview", e);
+    }
+
     const reqId = Math.random().toString(36).slice(2, 9);
     console.log(`[passport-docx][${reqId}] start`, {
-      keys: Object.keys(draft).length,
+      keys: Object.keys(draft).length
     });
 
     const docxBytes = await draftToDocxBinary(draft);
@@ -89,7 +99,7 @@ export async function POST(req: Request) {
       return new Response(
         JSON.stringify({
           error: "draftToDocxBinary returned unexpected type",
-          preview: previewHex,
+          preview: previewHex
         }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
@@ -107,8 +117,8 @@ export async function POST(req: Request) {
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": 'attachment; filename="passport.docx"',
         "Content-Length": String(length),
-        "Cache-Control": "no-store, must-revalidate",
-      },
+        "Cache-Control": "no-store, must-revalidate"
+      }
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
