@@ -54,8 +54,6 @@ const COLORS = {
   titleFill: "DCDCDC"
 };
 
-const PAGE_WIDTH = 10000;
-
 const safeText = (value: unknown, fallback = "—"): string => {
   if (value === null || value === undefined) return fallback;
   const s = String(value).trim();
@@ -513,10 +511,55 @@ export function buildPassportDoc(draft: DraftData): Document {
   });
 }
 
+export function buildMinimalTestDocx(): Document {
+  return new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: 900,
+              right: 700,
+              bottom: 900,
+              left: 700
+            },
+            size: {
+              orientation: PageOrientation.PORTRAIT
+            }
+          }
+        },
+        children: [
+          paragraph("ТЕСТОВЫЙ DOCX", {
+            bold: true,
+            size: 30,
+            align: AlignmentType.CENTER,
+            after: 140
+          }),
+          paragraph("Этот документ собран через buildMinimalTestDocx().", {
+            size: 22,
+            after: 100
+          }),
+          twoColTable([
+            ["Статус", "OK"],
+            ["Маршрут", "/api/passport-docx/test"],
+            ["Назначение", "Проверка сборки DOCX"]
+          ])
+        ]
+      }
+    ]
+  });
+}
+
 export async function draftToDocxBinary(
   draft: DraftData
 ): Promise<Uint8Array> {
   const doc = buildPassportDoc(draft);
+  const buffer = await Packer.toBuffer(doc);
+  return new Uint8Array(buffer);
+}
+
+export async function minimalTestDocxBinary(): Promise<Uint8Array> {
+  const doc = buildMinimalTestDocx();
   const buffer = await Packer.toBuffer(doc);
   return new Uint8Array(buffer);
 }
