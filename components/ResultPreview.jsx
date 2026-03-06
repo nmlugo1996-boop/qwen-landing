@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function buildSafeFileName(draft) {
   const raw =
@@ -108,18 +108,18 @@ function renderBlock(title, rows) {
 
 function LoadingStage({ title, subtitle, icon }) {
   return (
-    <div className="rounded-3xl bg-white/80 p-6 md:p-8 shadow-inner border border-black/5 animate-fadeIn">
+    <div className="rounded-3xl border border-black/5 bg-white/80 p-6 shadow-inner md:p-8 animate-fadeIn">
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff5b47]/10 text-2xl">
           {icon}
         </div>
         <div>
-          <div className="text-lg md:text-xl font-semibold text-black">{title}</div>
-          <div className="text-sm md:text-base text-black/55">{subtitle}</div>
+          <div className="text-lg font-semibold text-black md:text-xl">{title}</div>
+          <div className="text-sm text-black/55 md:text-base">{subtitle}</div>
         </div>
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-full bg-[#f0e2df] h-3">
+      <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#f0e2df]">
         <div className="result-progress-bar h-3 rounded-full bg-gradient-to-r from-[#ff5b47] via-[#ff8d80] to-[#ff5b47]" />
       </div>
 
@@ -161,7 +161,7 @@ export default function ResultPreview({
     };
   }, [loading]);
 
-  const handleDownloadDocx = async () => {
+  const handleDownloadDocx = useCallback(async () => {
     if (!draft) {
       alert("Сначала нужно сгенерировать паспорт.");
       return;
@@ -173,18 +173,19 @@ export default function ResultPreview({
 
       const safeName = buildSafeFileName(draft);
 
-      const statusTimers = [
-        window.setTimeout(() => {
-          setDocxStatusText("Формирую таблицы и блоки...");
-        }, 700),
-        window.setTimeout(() => {
-          setDocxStatusText("Упаковываю документ...");
-        }, 1500)
-      ];
+      const timer1 = window.setTimeout(() => {
+        setDocxStatusText("Формирую таблицы и блоки...");
+      }, 700);
+
+      const timer2 = window.setTimeout(() => {
+        setDocxStatusText("Упаковываю документ...");
+      }, 1500);
 
       await downloadDraftDocx(draft, safeName);
 
-      statusTimers.forEach((timerId) => window.clearTimeout(timerId));
+      window.clearTimeout(timer1);
+      window.clearTimeout(timer2);
+
       setDocxStatusText("DOCX готов");
     } catch (error) {
       console.error("DOCX download error", error);
@@ -195,7 +196,7 @@ export default function ResultPreview({
         setDocxStatusText("Собираю DOCX...");
       }, 500);
     }
-  };
+  }, [draft]);
 
   useEffect(() => {
     if (!autoDownloadDocx) return;
@@ -204,7 +205,7 @@ export default function ResultPreview({
 
     autoDownloadedRef.current = true;
     handleDownloadDocx();
-  }, [autoDownloadDocx, draft]);
+  }, [autoDownloadDocx, draft, handleDownloadDocx]);
 
   const header = draft?.header || {};
   const blocks = draft?.blocks || {};
