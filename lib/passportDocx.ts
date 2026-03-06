@@ -1,5 +1,5 @@
-// lib/passportDocx.ts
 import {
+  AlignmentType,
   Document,
   HeadingLevel,
   Packer,
@@ -8,8 +8,7 @@ import {
   TableCell,
   TableRow,
   TextRun,
-  WidthType,
-  AlignmentType
+  WidthType
 } from "docx";
 
 export type DraftHeader = {
@@ -33,34 +32,112 @@ export type DraftBlocks = Record<string, DraftBlockRow[]>;
 export type DraftData = {
   header?: DraftHeader;
   blocks?: DraftBlocks;
-  // Дополнительные текстовые разделы полного паспорта
-  tech?: string[]; // «Технология и состав» — как список пунктов
-  star?: string[]; // «Почему это звезда?» — как список пунктов
-  conclusion?: string; // «Заключение» — как один абзац
-  // возможны и другие поля — мы будем их санитизировать
+  tech?: string[] | string;
+  packaging?: string[] | string;
+  star?: string[] | string;
+  conclusion?: string;
   [key: string]: unknown;
 };
 
-// ----------------- ХЕЛПЕРЫ -----------------
-const safeText = (value: unknown, fallback = "—"): string => {
-  if (value === null || value === undefined) return fallback;
-  const s = String(value).trim();
-  return s === "" ? fallback : s;
+type BuildDocxOptions = {
+  startedAt?: number;
 };
 
-const boldParagraph = (text: string): Paragraph =>
-  new Paragraph({
+const MAX_TEXT = 2500;
+const MAX_LIST_ITEMS = 20;
+
+function safeText(value: unknown, fallback = "—"): string {
+  if (value === null || value === undefined) return fallback;
+  const text = String(value).replace(/\s+/g, " ").trim();
+  if (!text) return fallback;
+  if (text.length <= MAX_TEXT) return text;
+  return `${text.slice(0, MAX_TEXT)}… [ПРЕДПОЛОЖЕНИЕ: текст усечён]`;
+}
+
+function safeMultilineText(value: unknown, fallback = "—"): string {
+  if (value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  if (!text) return fallback;
+  if (text.length <= MAX_TEXT) return text;
+  return `${text.slice(0, MAX_TEXT)}…\n[ПРЕДПОЛОЖЕНИЕ: текст усечён]`;
+}
+
+function toLimitedList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, MAX_LIST_ITEMS)
+      .map((item) => safeMultilineText(item))
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, MAX_LIST_ITEMS)
+      .map((item) => safeMultilineText(item));
+  }
+
+  return [];
+}
+
+function boldParagraph(text: string): Paragraph {
+  return new Paragraph({
     children: [new TextRun({ text: safeText(text), bold: true })]
   });
+}
 
-// ----------------- Сборка документа -----------------
+function tableCellText(text: unknown): TableCell {
+  return new TableCell({
+    children: [new Paragraph(safeMultilineText(text))]
+  });
+}
+
+function normalizeDraft(input: DraftData): DraftData {
+  const header = input?.header ?? {};
+  const blocks = input?.blocks ?? {};
+
+  const normalizedBlocks: DraftBlocks = {};
+
+  const allowedBlockKeys = ["cognitive", "sensory", "branding", "marketing"];
+
+  for (const blockKey of allowedBlockKeys) {
+    const rows = Array.isArray(blocks[blockKey]) ? blocks[blockKey] : [];
+    normalizedBlocks[blockKey] = rows.slice(0, 20).map((row, index) => ({
+      no: row?.no ?? index + 1,
+      question: safeText(row?.question),
+      answer: safeMultilineText(row?.answer)
+    }));
+  }
+
+  return {
+    header: {
+      category: safeText(header.category),
+      name: safeText(header.name, "КСМ-паспорт продукта"),
+      audience: Array.isArray(header.audience)
+        ? header.audience.slice(0, 10).map((item) => safeText(item))
+        : safeText(header.audience),
+      pain: safeMultilineText(header.pain),
+      innovation: safeMultilineText(header.innovation),
+      unique: safeMultilineText(header.unique),
+      uniqueness: safeMultilineText(header.uniqueness)
+    },
+    blocks: normalizedBlocks,
+    tech: toLimitedList(input?.tech),
+    packaging: toLimitedList(input?.packaging),
+    star: toLimitedList(input?.star),
+    conclusion: safeMultilineText(input?.conclusion)
+  };
+}
+
 export function buildPassportDoc(draft: DraftData): Document {
-  const header = (draft.header ?? {}) as DraftHeader;
-  const blocks = (draft.blocks ?? {}) as DraftBlocks;
+  const safeDraft = normalizeDraft(draft);
+  const header = safeDraft.header ?? {};
+  const blocks = safeDraft.blocks ?? {};
 
   const children: (Paragraph | Table)[] = [];
 
-  // Заголовок документа
   children.push(
     new Paragraph({
       text: safeText(header.name, "КСМ-паспорт продукта"),
@@ -68,7 +145,6 @@ export function buildPassportDoc(draft: DraftData): Document {
     })
   );
 
-  // Подзаголовок с категорией
   if (header.category) {
     children.push(
       new Paragraph({
@@ -80,7 +156,6 @@ export function buildPassportDoc(draft: DraftData): Document {
 
   children.push(new Paragraph({ text: "" }));
 
-  // Краткий паспорт
   children.push(
     new Paragraph({
       text: "Краткий паспорт продукта",
@@ -89,53 +164,28 @@ export function buildPassportDoc(draft: DraftData): Document {
   );
 
   const audienceText = Array.isArray(header.audience)
-    ? header.audience.map((x) => safeText(x)).join(", ")
+    ? header.audience.join(", ")
     : safeText(header.audience);
 
   const shortTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
-    columnWidths: [2000, 8000],
     rows: [
       new TableRow({
-        children: [
-          new TableCell({ children: [new Paragraph("Категория")] }),
-          new TableCell({
-            children: [new Paragraph(safeText(header.category))]
-          })
-        ]
+        children: [tableCellText("Категория"), tableCellText(header.category)]
+      }),
+      new TableRow({
+        children: [tableCellText("Название"), tableCellText(header.name)]
+      }),
+      new TableRow({
+        children: [tableCellText("Целевая аудитория"), tableCellText(audienceText)]
+      }),
+      new TableRow({
+        children: [tableCellText("Потребительская боль"), tableCellText(header.pain)]
       }),
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph("Название")] }),
-          new TableCell({
-            children: [new Paragraph(safeText(header.name))]
-          })
-        ]
-      }),
-      new TableRow({
-        children: [
-          new TableCell({ children: [new Paragraph("Целевая аудитория")] }),
-          new TableCell({ children: [new Paragraph(audienceText)] })
-        ]
-      }),
-      new TableRow({
-        children: [
-          new TableCell({ children: [new Paragraph("Потребительская боль")] }),
-          new TableCell({
-            children: [new Paragraph(safeText(header.pain))]
-          })
-        ]
-      }),
-      new TableRow({
-        children: [
-          new TableCell({ children: [new Paragraph("Уникальность")] }),
-          new TableCell({
-            children: [
-              new Paragraph(
-                safeText(header.uniqueness ?? header.innovation ?? header.unique)
-              )
-            ]
-          })
+          tableCellText("Уникальность"),
+          tableCellText(header.uniqueness || header.innovation || header.unique)
         ]
       })
     ]
@@ -144,18 +194,16 @@ export function buildPassportDoc(draft: DraftData): Document {
   children.push(shortTable);
   children.push(new Paragraph({ text: "" }));
 
-  // Полные блоки
-  const blockOrder: { key: keyof DraftBlocks | string; title: string }[] = [
+  const blockOrder: { key: keyof DraftBlocks; title: string }[] = [
     { key: "cognitive", title: "Когнитивный блок" },
     { key: "sensory", title: "Сенсорный блок" },
     { key: "branding", title: "Брендинговый блок" },
     { key: "marketing", title: "Маркетинговый блок" }
   ];
 
-  blockOrder.forEach((block) => {
-    const rawRows = (blocks as any)?.[block.key];
-    const rows: DraftBlockRow[] = Array.isArray(rawRows) ? rawRows : [];
-    if (!rows.length) return;
+  for (const block of blockOrder) {
+    const rows = Array.isArray(blocks[block.key]) ? blocks[block.key] : [];
+    if (!rows.length) continue;
 
     children.push(
       new Paragraph({
@@ -166,7 +214,6 @@ export function buildPassportDoc(draft: DraftData): Document {
 
     const blockTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
-      columnWidths: [1000, 4500, 4500],
       rows: [
         new TableRow({
           children: [
@@ -176,18 +223,12 @@ export function buildPassportDoc(draft: DraftData): Document {
           ]
         }),
         ...rows.map((row, index) => {
-          const num = row?.no ?? index + 1;
+          const no = row?.no ?? index + 1;
           return new TableRow({
             children: [
-              new TableCell({
-                children: [new Paragraph(String(num))]
-              }),
-              new TableCell({
-                children: [new Paragraph(safeText(row?.question))]
-              }),
-              new TableCell({
-                children: [new Paragraph(safeText(row?.answer))]
-              })
+              tableCellText(String(no)),
+              tableCellText(row?.question),
+              tableCellText(row?.answer)
             ]
           });
         })
@@ -196,123 +237,127 @@ export function buildPassportDoc(draft: DraftData): Document {
 
     children.push(blockTable);
     children.push(new Paragraph({ text: "" }));
-  });
+  }
 
-  // Технология и состав — таблица
-  const techList = draft.tech;
-  if (techList && (Array.isArray(techList) ? techList.length : 0) > 0) {
-    const techItems = Array.isArray(techList) ? techList : [String(techList)];
+  const techList = toLimitedList(safeDraft.tech);
+  if (techList.length) {
     children.push(
       new Paragraph({
         text: "Технология и состав",
         heading: HeadingLevel.HEADING_3
       })
     );
-    const techTable = new Table({
+
+    const table = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
-      columnWidths: [1000, 9000],
       rows: [
         new TableRow({
-          children: [new TableCell({ children: [boldParagraph("№")] }), new TableCell({ children: [boldParagraph("Пункт")] })]
+          children: [
+            new TableCell({ children: [boldParagraph("№")] }),
+            new TableCell({ children: [boldParagraph("Пункт")] })
+          ]
         }),
-        ...techItems.map((item, i) =>
-          new TableRow({
-            children: [new TableCell({ children: [new Paragraph(String(i + 1))] }), new TableCell({ children: [new Paragraph(safeText(item))] })]
-          })
-        )
+        ...techList.map((item, index) => {
+          return new TableRow({
+            children: [tableCellText(index + 1), tableCellText(item)]
+          });
+        })
       ]
     });
-    children.push(techTable);
+
+    children.push(table);
     children.push(new Paragraph({ text: "" }));
   }
 
-  // Почему это звезда? — таблица
-  const starList = draft.star;
-  if (starList && (Array.isArray(starList) ? starList.length : 0) > 0) {
-    const starItems = Array.isArray(starList) ? starList : [String(starList)];
+  const packagingList = toLimitedList(safeDraft.packaging);
+  if (packagingList.length) {
     children.push(
       new Paragraph({
-        text: "Почему это звезда?",
+        text: "Форм-факторы и упаковка",
         heading: HeadingLevel.HEADING_3
       })
     );
-    const starTable = new Table({
+
+    const table = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
-      columnWidths: [1000, 9000],
       rows: [
         new TableRow({
-          children: [new TableCell({ children: [boldParagraph("№")] }), new TableCell({ children: [boldParagraph("Тезис")] })]
+          children: [
+            new TableCell({ children: [boldParagraph("№")] }),
+            new TableCell({ children: [boldParagraph("Пункт")] })
+          ]
         }),
-        ...starItems.map((item, i) =>
-          new TableRow({
-            children: [new TableCell({ children: [new Paragraph(String(i + 1))] }), new TableCell({ children: [new Paragraph(safeText(item))] })]
-          })
-        )
+        ...packagingList.map((item, index) => {
+          return new TableRow({
+            children: [tableCellText(index + 1), tableCellText(item)]
+          });
+        })
       ]
     });
-    children.push(starTable);
+
+    children.push(table);
     children.push(new Paragraph({ text: "" }));
   }
 
-  // Заключение — таблица (одна строка: поле | текст)
-  if (draft.conclusion != null && String(draft.conclusion).trim() !== "") {
+  const starList = toLimitedList(safeDraft.star);
+  if (starList.length) {
+    children.push(
+      new Paragraph({
+        text: "Почему это звезда",
+        heading: HeadingLevel.HEADING_3
+      })
+    );
+
+    const table = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({ children: [boldParagraph("№")] }),
+            new TableCell({ children: [boldParagraph("Тезис")] })
+          ]
+        }),
+        ...starList.map((item, index) => {
+          return new TableRow({
+            children: [tableCellText(index + 1), tableCellText(item)]
+          });
+        })
+      ]
+    });
+
+    children.push(table);
+    children.push(new Paragraph({ text: "" }));
+  }
+
+  if (safeDraft.conclusion && safeDraft.conclusion !== "—") {
     children.push(
       new Paragraph({
         text: "Заключение",
         heading: HeadingLevel.HEADING_3
       })
     );
-    const conclusionTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      columnWidths: [2500, 7500],
-      rows: [
-        new TableRow({
-          children: [new TableCell({ children: [boldParagraph("Текст")] }), new TableCell({ children: [new Paragraph(safeText(draft.conclusion))] })]
-        })
-      ]
-    });
-    children.push(conclusionTable);
+
+    children.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({ children: [boldParagraph("Итоговый вывод")] }),
+              tableCellText(safeDraft.conclusion)
+            ]
+          })
+        ]
+      })
+    );
+
     children.push(new Paragraph({ text: "" }));
   }
 
-  // Рекомендации — таблица (фиксированные рекомендации, если нужно)
-  const recommendations = [
-    "Проведите тестирование продукта с целевой аудиторией для валидации концепции",
-    "Разработайте детальную стратегию позиционирования на основе уникальности продукта",
-    "Подготовьте маркетинговые материалы, подчеркивающие эмоциональную ценность",
-    "Проанализируйте конкурентное окружение и выделите ключевые преимущества",
-    "Создайте план коммуникации, который расскажет историю продукта"
-  ];
-
-  children.push(
-    new Paragraph({
-      text: "Рекомендации",
-      heading: HeadingLevel.HEADING_3
-    })
-  );
-
-  const recTable = new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    columnWidths: [1000, 9000],
-    rows: [
-      new TableRow({
-        children: [new TableCell({ children: [boldParagraph("№")] }), new TableCell({ children: [boldParagraph("Рекомендация")] })]
-      }),
-      ...recommendations.map((item, i) =>
-        new TableRow({
-          children: [new TableCell({ children: [new Paragraph(String(i + 1))] }), new TableCell({ children: [new Paragraph(item)] })]
-        })
-      )
-    ]
-  });
-  children.push(recTable);
-  children.push(new Paragraph({ text: "" }));
-
-  // Футер с датой
   const date = new Date().toLocaleDateString("ru-RU", {
     year: "numeric",
-    month: "long",
-    day: "numeric"
+    month: "2-digit",
+    day: "2-digit"
   });
 
   children.push(
@@ -320,14 +365,14 @@ export function buildPassportDoc(draft: DraftData): Document {
       alignment: AlignmentType.CENTER,
       children: [
         new TextRun({
-          text: `Polar Star Passport · версия 1.0 · ${date}`,
+          text: `Polar Star Passport · ${date}`,
           italics: true
         })
       ]
     })
   );
 
-  const doc = new Document({
+  return new Document({
     sections: [
       {
         properties: {},
@@ -335,84 +380,54 @@ export function buildPassportDoc(draft: DraftData): Document {
       }
     ]
   });
-
-  return doc;
 }
 
-// ----------------- САНИТИЗАЦИЯ DRAFT (защита от слишком длинных полей) -----------------
-const MAX_STRING = 5000; // если строка длиннее — обрежем
-const MAX_ARRAY_ITEMS = 200; // если массив длиннее — усечём
-const MAX_OBJECT_KEYS = 500; // допустимый максимум ключей в объекте (защитное)
-const PREVIEW_SUFFIX = " [ПРЕДПОЛОЖЕНИЕ: усечено]";
+export async function draftToDocxBinary(draft: DraftData): Promise<Uint8Array> {
+  const doc = buildPassportDoc(draft);
+  const buffer = await Packer.toBuffer(doc);
+  return new Uint8Array(buffer);
+}
 
-function sanitizeValue(value: unknown): unknown {
-  if (value === null || value === undefined) return value;
-
-  if (typeof value === "string") {
-    if (value.length > MAX_STRING) {
-      return value.slice(0, MAX_STRING) + PREVIEW_SUFFIX;
-    }
-    return value;
-  }
-
-  if (typeof value === "number" || typeof value === "boolean") return value;
-
-  if (Array.isArray(value)) {
-    const out: unknown[] = [];
-    for (let i = 0; i < Math.min(value.length, MAX_ARRAY_ITEMS); i += 1) {
-      out.push(sanitizeValue(value[i]));
-    }
-    if (value.length > MAX_ARRAY_ITEMS) {
-      out.push(`[ПРЕДПОЛОЖЕНИЕ: массив усечён, всего ${value.length} элементов]`);
-    }
-    return out;
-  }
-
-  if (typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    const keys = Object.keys(obj);
-    const out: Record<string, unknown> = {};
-    for (let i = 0; i < Math.min(keys.length, MAX_OBJECT_KEYS); i += 1) {
-      const k = keys[i];
-      // избегаем сериализации больших вложенных бинарных/функциональных полей
-      try {
-        out[k] = sanitizeValue(obj[k]);
-      } catch (e) {
-        out[k] = "[ПРЕДПОЛОЖЕНИЕ: невозможно санитизировать]";
+export async function buildMinimalTestDocx(): Promise<Uint8Array> {
+  const doc = new Document({
+    sections: [
+      {
+        properties: {},
+        children: [
+          new Paragraph({
+            text: "ТЕСТОВЫЙ DOCX",
+            heading: HeadingLevel.HEADING_1
+          }),
+          new Paragraph({
+            text: "Этот документ собран через buildMinimalTestDocx()."
+          }),
+          new Paragraph({
+            text: ""
+          }),
+          new Paragraph({
+            text: "Маршрут: /api/passport-docx/test"
+          }),
+          new Paragraph({
+            text: "Назначение: Проверка сборки DOCX"
+          }),
+          new Paragraph({
+            text: "Статус: OK"
+          })
+        ]
       }
-    }
-    if (keys.length > MAX_OBJECT_KEYS) {
-      out.__truncated_keys_note = `[ПРЕДПОЛОЖЕНИЕ: набора ключей усечено, всего ${keys.length}]`;
-    }
-    return out;
-  }
+    ]
+  });
 
-  // функции, символы, прочее
-  return String(value);
+  const buffer = await Packer.toBuffer(doc);
+  return new Uint8Array(buffer);
 }
 
-function sanitizeDraft(draft: DraftData): DraftData {
-  try {
-    // глубокая копия с санитизацией
-    const copy = sanitizeValue(draft);
-    // TypeScript: приводим обратно
-    return (copy as unknown) as DraftData;
-  } catch (err) {
-    // если санитизация по какой-то причине упала — вернуть минимальную оболочку
-    return {
-      header: {
-        name: draft?.header?.name ?? "passport",
-        category: draft?.header?.category ?? "Новая категория",
-        audience: draft?.header?.audience ?? "—",
-        pain: draft?.header?.pain ?? "—"
-      },
-      blocks: draft?.blocks ?? {}
-    };
-  }
-}
+export async function buildDocxErrorBinary(
+  message: string,
+  extra?: Record<string, unknown>
+): Promise<Uint8Array> {
+  const details = extra ? JSON.stringify(extra, null, 2) : "";
 
-// ----------------- Создание минимального диагностического DOCX с ошибкой -----------------
-async function buildErrorDocx(errorMessage: string, draftPreview?: string): Promise<Uint8Array> {
   const doc = new Document({
     sections: [
       {
@@ -423,17 +438,20 @@ async function buildErrorDocx(errorMessage: string, draftPreview?: string): Prom
             heading: HeadingLevel.HEADING_1
           }),
           new Paragraph({
-            text: "",
+            text: safeMultilineText(message)
           }),
-          new Paragraph({
-            children: [new TextRun({ text: "Серверная ошибка при упаковке документа:", bold: true })]
-          }),
-          new Paragraph({
-            text: errorMessage
-          }),
-          new Paragraph({ text: "" }),
-          new Paragraph({ children: [new TextRun({ text: "Превью входных данных (усечено):", bold: true })] }),
-          new Paragraph({ text: draftPreview ?? "—" })
+          ...(details
+            ? [
+                new Paragraph({ text: "" }),
+                new Paragraph({
+                  text: "Технические детали:",
+                  heading: HeadingLevel.HEADING_3
+                }),
+                new Paragraph({
+                  text: safeMultilineText(details)
+                })
+              ]
+            : [])
         ]
       }
     ]
@@ -443,65 +461,75 @@ async function buildErrorDocx(errorMessage: string, draftPreview?: string): Prom
   return new Uint8Array(buffer);
 }
 
-// ----------------- Экспорт функции преобразования в Uint8Array -----------------
-export async function draftToDocxBinary(draft: DraftData): Promise<Uint8Array> {
-  // Санитизируем вход
-  const safeDraft = sanitizeDraft(draft);
-
+export async function buildDocxResponse(
+  draft: DraftData,
+  options?: BuildDocxOptions
+): Promise<Response> {
   try {
-    const doc = buildPassportDoc(safeDraft);
-    const buffer = await Packer.toBuffer(doc);
-    return new Uint8Array(buffer);
-  } catch (err) {
-    // Логируем ошибку сервера. Не выбрасываем — возвращаем диагностический docx.
-    try {
-      const emsg = err instanceof Error ? err.message : String(err);
-      const preview = (() => {
-        try {
-          const s = JSON.stringify(safeDraft);
-          return s.length > 800 ? s.slice(0, 800) + "..." : s;
-        } catch {
-          return "[не удалось сериализовать preview]";
-        }
-      })();
-      console.error("[passportDocx] build error:", emsg);
-      console.error("[passportDocx] draft preview (sanitized):", preview);
-      return await buildErrorDocx(emsg, preview);
-    } catch (fatal) {
-      // В крайнем случае вернём минимальный тестовый документ
-      console.error("[passportDocx] fatal fallback:", fatal);
-      const fallbackDoc = new Document({
-        sections: [
-          {
-            properties: {},
-            children: [
-              new Paragraph({ text: "TEST DOCX (fallback)", heading: HeadingLevel.HEADING_1 })
-            ]
-          }
-        ]
-      });
-      const buff = await Packer.toBuffer(fallbackDoc);
-      return new Uint8Array(buff);
-    }
+    const binary = await draftToDocxBinary(draft);
+    const arrayBuffer = binary.buffer.slice(
+      binary.byteOffset,
+      binary.byteOffset + binary.byteLength
+    ) as ArrayBuffer;
+
+    return new Response(arrayBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": 'attachment; filename="passport.docx"',
+        "Content-Length": String(binary.byteLength),
+        "Cache-Control": "no-store, must-revalidate"
+      }
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Не удалось собрать DOCX";
+
+    const errorBinary = await buildDocxErrorBinary(message, {
+      elapsedMs:
+        typeof options?.startedAt === "number"
+          ? Date.now() - options.startedAt
+          : undefined
+    });
+
+    const arrayBuffer = errorBinary.buffer.slice(
+      errorBinary.byteOffset,
+      errorBinary.byteOffset + errorBinary.byteLength
+    ) as ArrayBuffer;
+
+    return new Response(arrayBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": 'attachment; filename="passport-error.docx"',
+        "Content-Length": String(errorBinary.byteLength),
+        "Cache-Control": "no-store, must-revalidate"
+      }
+    });
   }
 }
 
-// Тестовый документ, если нужно для диагностики
-export async function buildMinimalTestDocx(): Promise<Uint8Array> {
-  const doc = new Document({
-    sections: [
-      {
-        properties: {},
-        children: [
-          new Paragraph({
-            text: "TEST DOCX OK",
-            heading: HeadingLevel.HEADING_1
-          })
-        ]
-      }
-    ]
-  });
+export function buildDocxErrorResponse(
+  message: string,
+  extra?: Record<string, unknown>
+): Promise<Response> {
+  return buildDocxErrorBinary(message, extra).then((binary) => {
+    const arrayBuffer = binary.buffer.slice(
+      binary.byteOffset,
+      binary.byteOffset + binary.byteLength
+    ) as ArrayBuffer;
 
-  const buffer = await Packer.toBuffer(doc);
-  return new Uint8Array(buffer);
+    return new Response(arrayBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": 'attachment; filename="passport-error.docx"',
+        "Content-Length": String(binary.byteLength),
+        "Cache-Control": "no-store, must-revalidate"
+      }
+    });
+  });
 }
