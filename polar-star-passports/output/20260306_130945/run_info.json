@@ -1,0 +1,9 @@
+﻿{
+    "ts":  "20260306_130945",
+    "APPLY":  false,
+    "PUSH_IF_APPLY":  true,
+    "REDIS_URL":  "redis://127.0.0.1:6379",
+    "DEPLOY_URL":  null,
+    "user":  "Маша",
+    "cwd":  "C:\\Users\\Маша\\Desktop\\qwen-landing-main"
+}

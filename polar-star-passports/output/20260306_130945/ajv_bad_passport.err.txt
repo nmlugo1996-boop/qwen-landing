@@ -1,0 +1,11 @@
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/short_passport/properties/rrc_rub" (strictTypes)
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/sensory_block/properties/visual/properties/protocol_test" (strictTypes)
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/sensory_block/properties/audio/properties/protocol_test" (strictTypes)
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/sensory_block/properties/smell/properties/protocol_test" (strictTypes)
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/sensory_block/properties/tactile/properties/protocol_test" (strictTypes)
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/sensory_block/properties/taste/properties/protocol_test" (strictTypes)
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/commerce/properties/unit_economics/properties/gross_margin_percent" (strictTypes)
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/commerce/properties/break_even_volume_months" (strictTypes)
+strict mode: use allowUnionTypes to allow union type keyword at "https://example.com/ksp.schema.json#/properties/validation_plan/items/properties/budget_rub" (strictTypes)

@@ -1,0 +1,7 @@
+﻿{
+    "ok":  false,
+    "host":  "127.0.0.1",
+    "port":  6379,
+    "ms":  3,
+    "error":  "connect ECONNREFUSED 127.0.0.1:6379"
+}

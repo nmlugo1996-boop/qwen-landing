@@ -1,666 +1,261 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-function formatAudience(audience) {
-  if (Array.isArray(audience)) return audience.join(", ");
-  if (typeof audience === "string") return audience;
-  return "—";
+async function downloadDraftDocx(draft, fileName = "passport.docx") {
+  if (!draft || typeof draft !== "object") {
+    throw new Error("Сначала нужно сгенерировать паспорт");
+  }
+
+  const response = await fetch("/api/passport-docx", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ draft })
+  });
+
+  if (!response.ok) {
+    let message = "Не удалось собрать DOCX";
+    try {
+      const data = await response.json();
+      message = data?.message || data?.error || message;
+    } catch (_) {
+      // ignore
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }
 
-export default function ResultPreview({ draft, loading, celebration = false }) {
-  const [shouldAnimate, setShouldAnimate] = useState(false);
-  const [prevDraft, setPrevDraft] = useState(null);
-  const [imageUrl, setImageUrl] = useState(null);
-  const [imageBase64, setImageBase64] = useState(null);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [imageError, setImageError] = useState(null);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingDots, setLoadingDots] = useState("");
-  const [loadingParticles, setLoadingParticles] = useState([]);
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [downloadTxtLoading, setDownloadTxtLoading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const header = draft?.header ?? {};
-  const blocks = draft?.blocks ?? {};
-
-  useEffect(() => {
-    if (draft && !loading && draft !== prevDraft) {
-      setShouldAnimate(true);
-      setPrevDraft(draft);
-    }
-  }, [draft, loading, prevDraft]);
-
-  // Анимация загрузки - частицы
-  useEffect(() => {
-    if (!loading) {
-      setLoadingParticles([]);
-      return;
-    }
-
-    const newParticles = Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      delay: Math.random() * 3,
-      size: Math.random() * 4 + 2,
-      speed: Math.random() * 1.5 + 1
-    }));
-    setLoadingParticles(newParticles);
-  }, [loading]);
-
-  // Анимация загрузки - прогресс
-  useEffect(() => {
-    if (!loading) {
-      setLoadingProgress(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setLoadingProgress((prev) => {
-        if (prev >= 95) return prev;
-        return prev + Math.random() * 3;
-      });
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [loading]);
-
-  // Анимация загрузки - точки
-  useEffect(() => {
-    if (!loading) {
-      setLoadingDots("");
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setLoadingDots((prev) => {
-        if (prev === "...") return "";
-        return prev + ".";
-      });
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [loading]);
-
-  const getValue = useCallback(
-    (key, fallback = "—") => {
-      switch (key) {
-        case "audience":
-          return formatAudience(header.audience ?? draft?.audience);
-        case "innovation":
-          return header.uniqueness ?? header.innovation ?? header.unique ?? draft?.uniqueness ?? fallback;
-        default:
-          return header[key] ?? draft?.[key] ?? fallback;
-      }
-    },
-    [draft, header]
-  );
-
-  const blockOrder = [
-    { key: "cognitive", title: "Когнитивный блок" },
-    { key: "sensory", title: "Сенсорный блок" },
-    { key: "branding", title: "Брендинговый блок" },
-    { key: "marketing", title: "Маркетинговый блок" }
-  ];
-
-  const showPlaceholder = loading || !draft;
-
-  // Собираем читаемый текст паспорта для копирования
-  const buildPassportText = useCallback(() => {
-    if (!draft) return "";
-    const lines = [];
-
-    lines.push("Паспорт уникального продукта");
-    lines.push("");
-    lines.push(`Категория: ${getValue("category")}`);
-    lines.push(`Название: ${getValue("name")}`);
-    lines.push(`Целевая аудитория: ${getValue("audience")}`);
-    lines.push(`Потребительская боль: ${getValue("pain")}`);
-    lines.push(`Уникальность: ${getValue("innovation")}`);
-    lines.push("");
-
-    blockOrder.forEach((block) => {
-      const rows = Array.isArray(blocks[block.key]) ? blocks[block.key] : [];
-      if (!rows.length) return;
-      lines.push(`=== ${block.title} ===`);
-      rows.forEach((row) => {
-        const no = row?.no ? String(row.no).trim() : "";
-        const question = row?.question || "";
-        const answer = row?.answer || "";
-        lines.push("");
-        if (no) {
-          lines.push(`${no}. ${question}`);
-        } else {
-          lines.push(question);
-        }
-        lines.push(answer);
-      });
-      lines.push("");
-    });
-
-    // Технология и состав
-    if (draft?.tech) {
-      lines.push("=== Технология и состав ===");
-      if (Array.isArray(draft.tech)) {
-        lines.push(draft.tech.join("\n"));
-      } else {
-        lines.push(draft.tech);
-      }
-      lines.push("");
-    }
-
-    // Форм-фактор и упаковка
-    if (draft?.packaging) {
-      lines.push("=== Форм-фактор и упаковка ===");
-      lines.push(String(draft.packaging));
-      lines.push("");
-    }
-
-    // Почему это звезда?
-    if (draft?.star) {
-      lines.push("=== Почему это звезда? ===");
-      if (Array.isArray(draft.star)) {
-        lines.push(draft.star.join("\n"));
-      } else {
-        lines.push(draft.star);
-      }
-      lines.push("");
-    }
-
-    // Заключение
-    if (draft?.conclusion) {
-      lines.push("=== Заключение ===");
-      lines.push(draft.conclusion);
-      lines.push("");
-    }
-
-    return lines.join("\n");
-  }, [draft, blocks, blockOrder, getValue]);
-
-  const handleCopy = useCallback(() => {
-    const text = buildPassportText();
-    if (!text) return;
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text);
-      setCopySuccess(true);
-      window.setTimeout(() => setCopySuccess(false), 2500);
-    }
-  }, [buildPassportText]);
-
-  const downloadTxt = useCallback(async () => {
-    if (!draft) return;
-    setDownloadTxtLoading(true);
-    setDownloadProgress(2);
-    try {
-      const res = await fetch("/api/passport-txt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ draft }),
-      });
-
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
-
-      if (!res.ok) {
-        if (ct.includes("application/json")) {
-          const data = await res.json().catch(() => null);
-          throw new Error(
-            data?.message || data?.error || "Ошибка сервера при генерации паспорта"
-          );
-        }
-        throw new Error("Сервер вернул статус " + res.status);
-      }
-
-      if (ct.includes("application/json")) {
-        const data = await res.json().catch(() => null);
-        throw new Error(
-          data?.message || "Сервер вернул JSON вместо TXT. Проверьте логи Vercel."
-        );
-      }
-
-      setDownloadProgress(30);
-      const text = await res.text();
-      setDownloadProgress(70);
-
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "passport.txt";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-
-      setDownloadProgress(100);
-    } catch (err) {
-      console.error("downloadTxt failed", err);
-      const msg =
-        err?.message && typeof err.message === "string" && err.message.length < 300
-          ? err.message
-          : "Ошибка при скачивании паспорта. Проверьте консоль и логи Vercel.";
-      alert("Ошибка при скачивании паспорта: " + msg);
-    } finally {
-      setTimeout(() => {
-        setDownloadTxtLoading(false);
-        setDownloadProgress(0);
-      }, 450);
-    }
-  }, [draft]);
-
-  // Извлекаем данные для генерации изображения
-  const getImageGenerationData = useCallback(() => {
-    if (!draft) return null;
-
-    // Визуальный образ из сенсорного блока
-    const sensoryBlock = blocks?.sensory;
-    let visualImage = null;
-    if (Array.isArray(sensoryBlock) && sensoryBlock.length > 0) {
-      const visualRow = sensoryBlock.find((row) => 
-        row?.question?.toLowerCase().includes("визуальный") || 
-        row?.no === "2.1"
-      );
-      if (visualRow?.answer) {
-        visualImage = visualRow.answer;
-      }
-    }
-
-    // Описание упаковки: отдельное поле или из tech
-    let packagingDescription = draft?.packaging ? String(draft.packaging) : null;
-    if (!packagingDescription && draft?.tech != null) {
-      const techList = Array.isArray(draft.tech) ? draft.tech : (typeof draft.tech === "string" ? draft.tech.split("\n").filter(Boolean) : []);
-      const fromTech = techList.find((text) => typeof text === "string" && text.toLowerCase().includes("упаковк"));
-      if (fromTech) packagingDescription = fromTech;
-    }
-
-    // Ядро бренда из брендингового блока
-    const brandingBlock = blocks?.branding;
-    let brandingCore = null;
-    if (Array.isArray(brandingBlock) && brandingBlock.length > 0) {
-      const coreRow = brandingBlock.find((row) => 
-        row?.question?.toLowerCase().includes("ядро") || 
-        row?.no === "3.3"
-      );
-      if (coreRow?.answer) {
-        brandingCore = coreRow.answer;
-      }
-    }
-
-    return {
-      category: getValue("category"),
-      name: getValue("name"),
-      audience: getValue("audience"),
-      pain: getValue("pain"),
-      innovation: getValue("innovation"),
-      visualImage,
-      packagingDescription,
-      brandingCore
-    };
-  }, [draft, blocks, getValue]);
-
-  const handleGenerateImage = useCallback(async () => {
-    if (!draft) return;
-
-    setIsGeneratingImage(true);
-    setImageError(null);
-    setImageUrl(null);
-    setImageBase64(null);
-
-    try {
-      const imageData = getImageGenerationData();
-      if (!imageData) {
-        throw new Error("Недостаточно данных для генерации изображения");
-      }
-
-      const response = await fetch("/api/generate-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(imageData)
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error?.error || `API ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      console.log("Image generation result:", result);
-      console.log("Full API response:", JSON.stringify(result, null, 2));
-      
-      // Показываем информацию о модели, если она есть
-      if (result.debug?.modelUsed) {
-        console.log("✅ Модель, использованная для генерации:", result.debug.modelUsed);
-        if (result.debug.modelUsed.toLowerCase().includes("qwen") && !result.debug.modelUsed.toLowerCase().includes("image")) {
-          console.error("❌ ОШИБКА: Используется текстовая модель Qwen вместо модели генерации изображений!");
-        }
-      }
-
-      if (result.success && result.imageUrl) {
-        setImageUrl(result.imageUrl);
-        setImageBase64(null);
-      } else if (result.success && result.imageBase64) {
-        setImageBase64(result.imageBase64);
-        setImageUrl(null);
-      } else {
-        // Если есть debug информация, показываем её
-        let errorMsg = "Изображение не было сгенерировано.";
-        
-        if (result.debug) {
-          errorMsg += `\n\nОтладочная информация:\n`;
-          if (result.debug.modelUsed) {
-            errorMsg += `- Использованная модель: ${result.debug.modelUsed}\n`;
-            if (result.debug.modelUsed.toLowerCase().includes("qwen") && !result.debug.modelUsed.toLowerCase().includes("image")) {
-              errorMsg += `⚠️ ПРОБЛЕМА: Используется текстовая модель Qwen вместо модели генерации изображений!\n`;
-            }
-          }
-          if (result.debug.apiUrl) {
-            errorMsg += `- API URL: ${result.debug.apiUrl}\n`;
-          }
-          if (result.debug.rawContentPreview && result.debug.rawContentPreview !== "N/A") {
-            errorMsg += `- Первые 200 символов ответа: ${result.debug.rawContentPreview.substring(0, 200)}...`;
-          }
-        } else if (result.rawContent) {
-          errorMsg += `\n\nОтвет API: ${result.rawContent.substring(0, 300)}...`;
-        }
-        
-        throw new Error(errorMsg);
-      }
-    } catch (error) {
-      console.error("Image generation error:", error);
-      setImageError(
-        error instanceof Error
-          ? error.message
-          : "Не удалось сгенерировать изображение"
-      );
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  }, [draft, getImageGenerationData]);
+function renderBlock(title, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return null;
 
   return (
-    <aside className="flex flex-col gap-4 md:gap-6 lg:sticky lg:top-32">
+    <div className="mt-6">
+      <h3 className="mb-3 text-lg font-semibold text-black">{title}</h3>
+      <div className="space-y-3">
+        {rows.map((row, index) => (
+          <div
+            key={`${title}-${index}`}
+            className="rounded-2xl border border-black/5 bg-white/70 p-4"
+          >
+            <div className="mb-1 text-sm font-semibold text-black/60">
+              {row?.no ? `${row.no}. ` : ""}
+              {row?.question || "Без вопроса"}
+            </div>
+            <div className="whitespace-pre-wrap text-base text-black/80">
+              {row?.answer || "—"}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function ResultPreview({
+  draft,
+  loading,
+  celebration,
+  autoDownloadDocx = false
+}) {
+  const [docxLoading, setDocxLoading] = useState(false);
+  const autoDownloadedRef = useRef(false);
+
+  const handleDownloadDocx = async () => {
+    if (!draft) {
+      alert("Сначала нужно сгенерировать паспорт.");
+      return;
+    }
+
+    try {
+      setDocxLoading(true);
+
+      const safeName =
+        (draft?.header?.name || "passport")
+          .toString()
+          .trim()
+          .replace(/[\\/:*?"<>|]+/g, "_")
+          .slice(0, 80) || "passport";
+
+      await downloadDraftDocx(draft, `${safeName}.docx`);
+    } catch (error) {
+      console.error("DOCX download error", error);
+      alert(error?.message || "Ошибка при скачивании DOCX");
+    } finally {
+      setDocxLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!autoDownloadDocx) return;
+    if (!draft) return;
+    if (autoDownloadedRef.current) return;
+
+    autoDownloadedRef.current = true;
+    handleDownloadDocx();
+  }, [autoDownloadDocx, draft]);
+
+  const header = draft?.header || {};
+  const blocks = draft?.blocks || {};
+
+  return (
+    <div id="full-passport" className="space-y-4">
       {celebration ? (
-        <div className="passport-ready-label rounded-xl md:rounded-3xl p-3 md:p-4 text-center text-xs md:text-sm shadow-sm md:shadow-lg">
+        <div className="rounded-full bg-[#4b2b25]/80 px-6 py-4 text-center font-semibold text-white shadow">
           Поздравляем! Вы создали новый продукт!
         </div>
       ) : null}
 
-      <section
-        id="full-passport"
-        className="floating-panel border border-white/20 bg-white/95 shadow-sm md:shadow-lg transition-opacity duration-500 rounded-xl md:rounded-3xl p-4 md:p-6"
-        aria-live="polite"
-        style={{ opacity: draft && !loading ? 1 : 0.6 }}
-      >
-        {loading && !draft ? (
-          // Анимация загрузки
-          <div className="flex flex-col gap-6 py-8">
-            <div className="text-center">
-              <h2 className="text-xl md:text-2xl font-semibold text-neutral-900">
-                Создаём ваш уникальный продукт{loadingDots}
-              </h2>
-            </div>
-
-            {/* Прогресс-бар с частицами */}
-            <div className="relative h-2 bg-neutral-200 rounded-full overflow-visible">
-              {/* Фон прогресс-бара */}
-              <div className="absolute inset-0 bg-gradient-to-r from-neutral-100 to-neutral-200 rounded-full" />
-              
-              {/* Заполнение прогресс-бара */}
-              <div
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-[#FF5B5B] to-[#FF7B5B] rounded-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(255,91,91,0.5)]"
-                style={{ width: `${Math.min(loadingProgress, 100)}%` }}
-              >
-                {/* Свечение на конце прогресс-бара */}
-                <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-r from-transparent to-white/30 blur-sm" />
-              </div>
-
-              {/* Частицы вокруг прогресс-бара */}
-              {loadingParticles.map((particle) => (
-                <div
-                  key={particle.id}
-                  className="absolute top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[#FF5B5B] to-[#FF7B5B] opacity-70 shadow-[0_0_6px_rgba(255,91,91,0.6)] pointer-events-none"
-                  style={{
-                    left: `${particle.x}%`,
-                    width: `${particle.size}px`,
-                    height: `${particle.size}px`,
-                    animationDelay: `${particle.delay}s`,
-                    animation: `floatUp ${2 + particle.speed}s ease-out infinite`
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="flex flex-col gap-2">
-              <h2 className="text-xl md:text-2xl font-semibold text-neutral-900">
-                Паспорт уникального продукта
-              </h2>
-              <p className="text-xs md:text-sm text-neutral-600">
-                Когнитивно-сенсорный маркетинговый паспорт по методике «Полярная звезда»
-              </p>
-            </div>
-
-            <div id="fp-content" className="mt-4 md:mt-6 flex flex-col gap-4 md:gap-6">
-          {/* Шапка продукта — только поля, пришедшие из API */}
-          <div className="space-y-3 md:space-y-4">
-            {header.category != null && header.category !== "" && (
-              <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-                <span className="text-xs uppercase tracking-wide text-neutral-500">Категория</span>
-                <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
-                  {getValue("category")}
-                </strong>
-              </div>
-            )}
-            {header.name != null && header.name !== "" && (
-              <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-                <span className="text-xs uppercase tracking-wide text-neutral-500">Название</span>
-                <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
-                  {getValue("name")}
-                </strong>
-              </div>
-            )}
-            {header.audience != null && header.audience !== "" && (
-              <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-                <span className="text-xs uppercase tracking-wide text-neutral-500">Целевая аудитория</span>
-                <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
-                  {getValue("audience")}
-                </strong>
-              </div>
-            )}
-            {header.pain != null && header.pain !== "" && (
-              <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-                <span className="text-xs uppercase tracking-wide text-neutral-500">Потребительская боль</span>
-                <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
-                  {getValue("pain")}
-                </strong>
-              </div>
-            )}
-            {(header.uniqueness != null && header.uniqueness !== "") || (header.innovation != null && header.innovation !== "") ? (
-              <div className="flex flex-col gap-1 rounded-xl md:rounded-2xl bg-white/70 p-3 md:p-4 shadow-inner">
-                <span className="text-xs uppercase tracking-wide text-neutral-500">Уникальность</span>
-                <strong className="text-base md:text-lg text-neutral-900 transition-opacity duration-300">
-                  {getValue("innovation")}
-                </strong>
-              </div>
-            ) : null}
-          </div>
-
-          {blockOrder.map((block) => {
-            const rows = Array.isArray(blocks[block.key]) ? blocks[block.key] : [];
-            if (!rows.length) return null;
-            return (
-              <div
-                key={block.key}
-                className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner"
-              >
-                <h3 className="text-base md:text-lg font-semibold text-neutral-800">
-                  {block.title}
-                </h3>
-                <div className="mt-3 md:mt-4 overflow-x-auto rounded-xl md:rounded-2xl border border-neutral-200/80">
-                  <table className="w-full border-collapse text-xs md:text-sm text-neutral-700 min-w-[600px] md:min-w-0">
-                    <thead className="bg-neutral-100/80 text-left uppercase tracking-wide text-neutral-500">
-                      <tr>
-                        <th className="px-2 md:px-4 py-2 md:py-3">№</th>
-                        <th className="px-2 md:px-4 py-2 md:py-3">Вопрос</th>
-                        <th className="px-2 md:px-4 py-2 md:py-3">Ответ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row, index) => (
-                        <tr
-                          key={`${block.key}-${index}`}
-                          className="odd:bg-white even:bg-neutral-50/70"
-                        >
-                          <td className="px-2 md:px-4 py-2 md:py-3 align-top font-semibold text-neutral-500">
-                            {row?.no ?? index + 1}
-                          </td>
-                          <td className="px-2 md:px-4 py-2 md:py-3 align-top font-medium text-neutral-700">
-                            {row?.question || ""}
-                          </td>
-                          <td className="px-2 md:px-4 py-2 md:py-3 align-top text-neutral-600">
-                            {row?.answer || ""}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            );
-          })}
-
-        {/* Финальные секции — только если пришли из API */}
-        {draft?.tech != null && (typeof draft.tech === "string" ? draft.tech : Array.isArray(draft.tech) ? draft.tech.join("\n") : "").trim() !== "" && (
-          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
-            <h3 className="text-base md:text-lg font-semibold text-neutral-800">
-              Технология и состав
-            </h3>
-            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
-              {typeof draft.tech === "string" ? draft.tech : Array.isArray(draft.tech) ? draft.tech.join("\n") : String(draft.tech)}
+      <section className="rounded-[32px] bg-[#f3ebea]/95 p-6 shadow-xl md:p-8">
+        <div className="mb-6">
+          <div>
+            <h2 className="text-3xl font-semibold leading-tight text-black md:text-4xl">
+              Паспорт уникального продукта
+            </h2>
+            <p className="mt-3 text-lg text-black/55 md:text-xl">
+              Когнитивно-сенсорный маркетинговый паспорт по методике «Полярная звезда»
             </p>
           </div>
-        )}
-        {draft?.packaging != null && String(draft.packaging).trim() !== "" && (
-          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
-            <h3 className="text-base md:text-lg font-semibold text-neutral-800">
-              Форм-фактор и упаковка
-            </h3>
-            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
-              {draft.packaging}
-            </p>
-          </div>
-        )}
-        {draft?.star != null && (typeof draft.star === "string" ? draft.star : Array.isArray(draft.star) ? draft.star.join("\n") : "").trim() !== "" && (
-          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
-            <h3 className="text-base md:text-lg font-semibold text-neutral-800">
-              Почему это звезда?
-            </h3>
-            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
-              {typeof draft.star === "string" ? draft.star : Array.isArray(draft.star) ? draft.star.join("\n") : String(draft.star)}
-            </p>
-          </div>
-        )}
-        {draft?.conclusion != null && String(draft.conclusion).trim() !== "" && (
-          <div className="rounded-xl md:rounded-3xl border border-neutral-200/70 bg-white/80 p-4 md:p-5 shadow-inner">
-            <h3 className="text-base md:text-lg font-semibold text-neutral-800">
-              Заключение
-            </h3>
-            <p className="mt-2 text-sm whitespace-pre-line text-neutral-700">
-              {draft.conclusion}
-            </p>
-          </div>
-        )}
 
-          {/* Кнопки: копировать, скачать TXT (Docs) */}
-          <div className="flex flex-col items-center gap-3 mt-4 md:mt-5">
-            {copySuccess && (
-              <div className="rounded-xl border-2 border-[#ff5b5b] bg-[#fff5f5] px-5 py-3 text-center text-base font-semibold text-[#c53030] shadow-md">
-                Ваш паспорт скопирован!
-              </div>
-            )}
-            <div className="flex flex-wrap justify-center gap-2 md:gap-3">
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={!draft}
-                className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition"
-              >
-                Скопировать паспорт
-              </button>
-              <button
-                type="button"
-                onClick={downloadTxt}
-                disabled={!draft || downloadTxtLoading}
-                aria-busy={downloadTxtLoading}
-                aria-label="Скачать Docs"
-                className="px-6 py-3 rounded-full bg-[#ff5b5b] text-white text-sm md:text-base font-semibold shadow-md hover:bg-[#ff7171] disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center justify-center gap-2"
-              >
-                <span>{downloadTxtLoading ? "Готовим документ" : "Скачать Docs"}</span>
-                {downloadTxtLoading && (
-                  <span className="docx-loader" aria-hidden="true">
-                    <span className="docx-loader-dot" />
-                    <span className="docx-loader-dot" />
-                    <span className="docx-loader-dot" />
-                  </span>
-                )}
-              </button>
-            </div>
+          <div className="mt-8 flex justify-center">
+            <button
+              type="button"
+              onClick={handleDownloadDocx}
+              disabled={!draft || loading || docxLoading}
+              className="flex min-h-[64px] w-full max-w-[420px] items-center justify-center rounded-full bg-[#ff5b47] px-8 py-4 text-xl font-semibold text-white shadow-[0_10px_30px_rgba(255,91,71,0.28)] transition hover:bg-[#ff6a57] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:min-h-[72px] md:max-w-[460px] md:text-2xl"
+            >
+              {docxLoading ? "Собираю DOCX..." : "Скачать DOCX"}
+            </button>
           </div>
         </div>
+
+        {loading ? (
+          <div className="rounded-2xl bg-white/70 p-6 text-black/60">
+            Генерирую паспорт...
+          </div>
+        ) : null}
+
+        {!loading && !draft ? (
+          <div className="rounded-2xl bg-white/70 p-6 text-black/60 md:p-8">
+            Здесь появится готовый паспорт после генерации.
+          </div>
+        ) : null}
+
+        {!loading && draft ? (
+          <>
+            <div className="grid gap-4">
+              <div className="rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Категория
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-black">
+                  {header.category || "—"}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Название
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-black">
+                  {header.name || "—"}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Целевая аудитория
+                </div>
+                <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
+                  {Array.isArray(header.audience)
+                    ? header.audience.join(", ")
+                    : header.audience || "—"}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Потребительская боль
+                </div>
+                <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
+                  {header.pain || "—"}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Уникальность
+                </div>
+                <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
+                  {header.uniqueness || header.innovation || header.unique || "—"}
+                </div>
+              </div>
+            </div>
+
+            {renderBlock("Когнитивный блок", blocks.cognitive)}
+            {renderBlock("Сенсорный блок", blocks.sensory)}
+            {renderBlock("Брендинговый блок", blocks.branding)}
+            {renderBlock("Маркетинговый блок", blocks.marketing)}
+
+            {draft?.tech ? (
+              <div className="mt-6 rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Технология и состав
+                </div>
+                <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
+                  {Array.isArray(draft.tech) ? draft.tech.join("\n") : draft.tech}
+                </div>
+              </div>
+            ) : null}
+
+            {draft?.packaging ? (
+              <div className="mt-6 rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Форм-факторы и упаковка
+                </div>
+                <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
+                  {Array.isArray(draft.packaging)
+                    ? draft.packaging.join("\n")
+                    : draft.packaging}
+                </div>
+              </div>
+            ) : null}
+
+            {draft?.star ? (
+              <div className="mt-6 rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Почему это звезда
+                </div>
+                <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
+                  {Array.isArray(draft.star) ? draft.star.join("\n") : draft.star}
+                </div>
+              </div>
+            ) : null}
+
+            {draft?.conclusion ? (
+              <div className="mt-6 rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Заключение
+                </div>
+                <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
+                  {draft.conclusion}
+                </div>
+              </div>
+            ) : null}
           </>
-        )}
+        ) : null}
       </section>
-      <style jsx>{`
-        @keyframes floatUp {
-          0% {
-            transform: translateY(0) translateX(0) scale(1);
-            opacity: 0.7;
-          }
-          30% {
-            transform: translateY(-15px) translateX(5px) scale(1.3);
-            opacity: 1;
-          }
-          60% {
-            transform: translateY(-30px) translateX(15px) scale(1.1);
-            opacity: 0.8;
-          }
-          100% {
-            transform: translateY(-50px) translateX(25px) scale(0.6);
-            opacity: 0;
-          }
-        }
-        .docx-loader {
-          display: inline-flex;
-          gap: 6px;
-          align-items: center;
-        }
-        .docx-loader-dot {
-          width: 8px;
-          height: 8px;
-          background: #fff;
-          border-radius: 50%;
-          animation: docx-bounce 900ms infinite ease-in-out;
-        }
-        .docx-loader-dot:nth-child(2) {
-          animation-delay: 150ms;
-        }
-        .docx-loader-dot:nth-child(3) {
-          animation-delay: 300ms;
-        }
-        @keyframes docx-bounce {
-          0%, 100% {
-            transform: translateY(0);
-            opacity: 0.4;
-          }
-          50% {
-            transform: translateY(-7px);
-            opacity: 1;
-          }
-        }
-      `}</style>
-    </aside>
+    </div>
   );
 }
