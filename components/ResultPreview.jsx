@@ -1,6 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+function buildSafeFileName(draft) {
+  const raw =
+    (draft?.header?.name || "passport")
+      .toString()
+      .trim()
+      .replace(/[\\/:*?"<>|]+/g, "_")
+      .replace(/\s+/g, " ")
+      .slice(0, 80) || "passport";
+
+  return `${raw}.docx`;
+}
 
 async function downloadDraftDocx(draft, fileName = "passport.docx") {
   if (!draft || typeof draft !== "object") {
@@ -15,8 +27,26 @@ async function downloadDraftDocx(draft, fileName = "passport.docx") {
     body: JSON.stringify({ draft })
   });
 
+  const contentType = (response.headers.get("content-type") || "").toLowerCase();
+
   if (!response.ok) {
     let message = "Не удалось собрать DOCX";
+    try {
+      if (contentType.includes("application/json")) {
+        const data = await response.json();
+        message = data?.message || data?.error || message;
+      } else {
+        const text = await response.text();
+        if (text?.trim()) message = text.slice(0, 250);
+      }
+    } catch (_) {
+      // ignore
+    }
+    throw new Error(message);
+  }
+
+  if (contentType.includes("application/json")) {
+    let message = "Сервер вернул JSON вместо DOCX";
     try {
       const data = await response.json();
       message = data?.message || data?.error || message;
@@ -26,7 +56,20 @@ async function downloadDraftDocx(draft, fileName = "passport.docx") {
     throw new Error(message);
   }
 
+  if (
+    !contentType.includes(
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ) &&
+    !contentType.includes("application/octet-stream")
+  ) {
+    throw new Error(`Неожиданный тип ответа: ${contentType || "unknown"}`);
+  }
+
   const blob = await response.blob();
+  if (!blob || blob.size === 0) {
+    throw new Error("DOCX получился пустым");
+  }
+
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -63,6 +106,41 @@ function renderBlock(title, rows) {
   );
 }
 
+function LoadingStage({ title, subtitle, icon }) {
+  return (
+    <div className="rounded-3xl bg-white/80 p-6 md:p-8 shadow-inner border border-black/5 animate-fadeIn">
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff5b47]/10 text-2xl">
+          {icon}
+        </div>
+        <div>
+          <div className="text-lg md:text-xl font-semibold text-black">{title}</div>
+          <div className="text-sm md:text-base text-black/55">{subtitle}</div>
+        </div>
+      </div>
+
+      <div className="mt-5 overflow-hidden rounded-full bg-[#f0e2df] h-3">
+        <div className="result-progress-bar h-3 rounded-full bg-gradient-to-r from-[#ff5b47] via-[#ff8d80] to-[#ff5b47]" />
+      </div>
+
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="rounded-2xl bg-[#fff5f3] p-4">
+          <div className="text-xs uppercase tracking-wide text-black/40">Этап 1</div>
+          <div className="mt-2 text-sm font-medium text-black/80">Анализ запроса</div>
+        </div>
+        <div className="rounded-2xl bg-[#fff5f3] p-4">
+          <div className="text-xs uppercase tracking-wide text-black/40">Этап 2</div>
+          <div className="mt-2 text-sm font-medium text-black/80">Сбор структуры</div>
+        </div>
+        <div className="rounded-2xl bg-[#fff5f3] p-4">
+          <div className="text-xs uppercase tracking-wide text-black/40">Этап 3</div>
+          <div className="mt-2 text-sm font-medium text-black/80">Подготовка результата</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ResultPreview({
   draft,
   loading,
@@ -70,7 +148,18 @@ export default function ResultPreview({
   autoDownloadDocx = false
 }) {
   const [docxLoading, setDocxLoading] = useState(false);
+  const [docxStatusText, setDocxStatusText] = useState("Собираю DOCX...");
   const autoDownloadedRef = useRef(false);
+
+  const loadingStage = useMemo(() => {
+    if (!loading) return null;
+
+    return {
+      title: "Генерирую паспорт",
+      subtitle: "Собираю структуру, смыслы и ключевые блоки документа",
+      icon: "⚙️"
+    };
+  }, [loading]);
 
   const handleDownloadDocx = async () => {
     if (!draft) {
@@ -80,20 +169,31 @@ export default function ResultPreview({
 
     try {
       setDocxLoading(true);
+      setDocxStatusText("Собираю DOCX...");
 
-      const safeName =
-        (draft?.header?.name || "passport")
-          .toString()
-          .trim()
-          .replace(/[\\/:*?"<>|]+/g, "_")
-          .slice(0, 80) || "passport";
+      const safeName = buildSafeFileName(draft);
 
-      await downloadDraftDocx(draft, `${safeName}.docx`);
+      const statusTimers = [
+        window.setTimeout(() => {
+          setDocxStatusText("Формирую таблицы и блоки...");
+        }, 700),
+        window.setTimeout(() => {
+          setDocxStatusText("Упаковываю документ...");
+        }, 1500)
+      ];
+
+      await downloadDraftDocx(draft, safeName);
+
+      statusTimers.forEach((timerId) => window.clearTimeout(timerId));
+      setDocxStatusText("DOCX готов");
     } catch (error) {
       console.error("DOCX download error", error);
       alert(error?.message || "Ошибка при скачивании DOCX");
     } finally {
-      setDocxLoading(false);
+      window.setTimeout(() => {
+        setDocxLoading(false);
+        setDocxStatusText("Собираю DOCX...");
+      }, 500);
     }
   };
 
@@ -135,15 +235,17 @@ export default function ResultPreview({
               disabled={!draft || loading || docxLoading}
               className="flex min-h-[64px] w-full max-w-[420px] items-center justify-center rounded-full bg-[#ff5b47] px-8 py-4 text-xl font-semibold text-white shadow-[0_10px_30px_rgba(255,91,71,0.28)] transition hover:bg-[#ff6a57] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 md:min-h-[72px] md:max-w-[460px] md:text-2xl"
             >
-              {docxLoading ? "Собираю DOCX..." : "Скачать DOCX"}
+              {docxLoading ? docxStatusText : "Скачать DOCX"}
             </button>
           </div>
         </div>
 
         {loading ? (
-          <div className="rounded-2xl bg-white/70 p-6 text-black/60">
-            Генерирую паспорт...
-          </div>
+          <LoadingStage
+            title={loadingStage.title}
+            subtitle={loadingStage.subtitle}
+            icon={loadingStage.icon}
+          />
         ) : null}
 
         {!loading && !draft ? (
@@ -153,7 +255,7 @@ export default function ResultPreview({
         ) : null}
 
         {!loading && draft ? (
-          <>
+          <div className="passport-appear">
             <div className="grid gap-4">
               <div className="rounded-2xl bg-white/80 p-5">
                 <div className="text-sm uppercase tracking-wide text-black/40">
@@ -253,7 +355,7 @@ export default function ResultPreview({
                 </div>
               </div>
             ) : null}
-          </>
+          </div>
         ) : null}
       </section>
     </div>
