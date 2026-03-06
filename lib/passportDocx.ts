@@ -511,7 +511,7 @@ export function buildPassportDoc(draft: DraftData): Document {
   });
 }
 
-export function buildMinimalTestDocx(): Document {
+function buildMinimalTestDocument(): Document {
   return new Document({
     sections: [
       {
@@ -550,16 +550,16 @@ export function buildMinimalTestDocx(): Document {
   });
 }
 
-export async function draftToDocxBinary(
-  draft: DraftData
-): Promise<Uint8Array> {
-  const doc = buildPassportDoc(draft);
+export async function buildMinimalTestDocx(): Promise<Uint8Array> {
+  const doc = buildMinimalTestDocument();
   const buffer = await Packer.toBuffer(doc);
   return new Uint8Array(buffer);
 }
 
-export async function minimalTestDocxBinary(): Promise<Uint8Array> {
-  const doc = buildMinimalTestDocx();
+export async function draftToDocxBinary(
+  draft: DraftData
+): Promise<Uint8Array> {
+  const doc = buildPassportDoc(draft);
   const buffer = await Packer.toBuffer(doc);
   return new Uint8Array(buffer);
 }
