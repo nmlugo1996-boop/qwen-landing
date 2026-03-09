@@ -12,3 +12,4 @@ pnpm-debug.log*
 .vercel
 tsconfig.tsbuildinfo
 test-passport.docx
+.env.local.example.txt
