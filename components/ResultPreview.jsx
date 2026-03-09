@@ -106,9 +106,14 @@ function renderBlock(title, rows) {
   );
 }
 
+function renderListOrText(value) {
+  if (Array.isArray(value)) return value.join("\n");
+  return value || "—";
+}
+
 function LoadingStage({ title, subtitle, icon }) {
   return (
-    <div className="rounded-3xl border border-black/5 bg-white/80 p-6 shadow-inner md:p-8 animate-fadeIn">
+    <div className="animate-fadeIn rounded-3xl border border-black/5 bg-white/80 p-6 shadow-inner md:p-8">
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff5b47]/10 text-2xl">
           {icon}
@@ -126,15 +131,15 @@ function LoadingStage({ title, subtitle, icon }) {
       <div className="mt-5 grid grid-cols-3 gap-3">
         <div className="rounded-2xl bg-[#fff5f3] p-4">
           <div className="text-xs uppercase tracking-wide text-black/40">Этап 1</div>
-          <div className="mt-2 text-sm font-medium text-black/80">Анализ запроса</div>
+          <div className="mt-2 text-sm font-medium text-black/80">Изобретение продукта</div>
         </div>
         <div className="rounded-2xl bg-[#fff5f3] p-4">
           <div className="text-xs uppercase tracking-wide text-black/40">Этап 2</div>
-          <div className="mt-2 text-sm font-medium text-black/80">Сбор структуры</div>
+          <div className="mt-2 text-sm font-medium text-black/80">Сбор паспорта</div>
         </div>
         <div className="rounded-2xl bg-[#fff5f3] p-4">
           <div className="text-xs uppercase tracking-wide text-black/40">Этап 3</div>
-          <div className="mt-2 text-sm font-medium text-black/80">Подготовка результата</div>
+          <div className="mt-2 text-sm font-medium text-black/80">Редакторская полировка</div>
         </div>
       </div>
     </div>
@@ -155,8 +160,9 @@ export default function ResultPreview({
     if (!loading) return null;
 
     return {
-      title: "Генерирую паспорт",
-      subtitle: "Собираю структуру, смыслы и ключевые блоки документа",
+      title: "Генерирую новый продукт",
+      subtitle:
+        "Сначала собираю продуктовый объект, потом оформляю полный паспорт",
       icon: "⚙️"
     };
   }, [loading]);
@@ -209,6 +215,7 @@ export default function ResultPreview({
 
   const header = draft?.header || {};
   const blocks = draft?.blocks || {};
+  const productCore = draft?.product_core || {};
 
   return (
     <div id="full-passport" className="space-y-4">
@@ -281,9 +288,7 @@ export default function ResultPreview({
                   Целевая аудитория
                 </div>
                 <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
-                  {Array.isArray(header.audience)
-                    ? header.audience.join(", ")
-                    : header.audience || "—"}
+                  {renderListOrText(header.audience)}
                 </div>
               </div>
 
@@ -306,6 +311,81 @@ export default function ResultPreview({
               </div>
             </div>
 
+            {(productCore.one_liner ||
+              productCore.physical_form ||
+              productCore.appearance) ? (
+              <div className="mt-6 rounded-2xl bg-white/80 p-5">
+                <div className="text-sm uppercase tracking-wide text-black/40">
+                  Новый продукт
+                </div>
+
+                <div className="mt-4 grid gap-4">
+                  <div>
+                    <div className="text-sm font-semibold text-black/55">
+                      One-liner
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-lg text-black/85">
+                      {productCore.one_liner || "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-semibold text-black/55">
+                      Физическая форма
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-lg text-black/85">
+                      {productCore.physical_form || "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-semibold text-black/55">
+                      Как выглядит
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-lg text-black/85">
+                      {productCore.appearance || "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-semibold text-black/55">
+                      Состав / устройство
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-lg text-black/85">
+                      {productCore.composition || "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-semibold text-black/55">
+                      Как используют
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-lg text-black/85">
+                      {productCore.usage || "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-semibold text-black/55">
+                      В чём новизна
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-lg text-black/85">
+                      {productCore.novelty_mechanism || "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-semibold text-black/55">
+                      Почему хочется попробовать
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-lg text-black/85">
+                      {productCore.why_people_will_try_it || "—"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             {renderBlock("Когнитивный блок", blocks.cognitive)}
             {renderBlock("Сенсорный блок", blocks.sensory)}
             {renderBlock("Брендинговый блок", blocks.branding)}
@@ -317,7 +397,7 @@ export default function ResultPreview({
                   Технология и состав
                 </div>
                 <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
-                  {Array.isArray(draft.tech) ? draft.tech.join("\n") : draft.tech}
+                  {renderListOrText(draft.tech)}
                 </div>
               </div>
             ) : null}
@@ -328,9 +408,7 @@ export default function ResultPreview({
                   Форм-факторы и упаковка
                 </div>
                 <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
-                  {Array.isArray(draft.packaging)
-                    ? draft.packaging.join("\n")
-                    : draft.packaging}
+                  {renderListOrText(draft.packaging)}
                 </div>
               </div>
             ) : null}
@@ -341,7 +419,7 @@ export default function ResultPreview({
                   Почему это звезда
                 </div>
                 <div className="mt-2 whitespace-pre-wrap text-lg text-black/80">
-                  {Array.isArray(draft.star) ? draft.star.join("\n") : draft.star}
+                  {renderListOrText(draft.star)}
                 </div>
               </div>
             ) : null}
