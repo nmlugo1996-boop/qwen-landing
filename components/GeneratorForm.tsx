@@ -510,26 +510,29 @@ export default function GeneratorForm({
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       onSubmitStart?.();
-
+  
       const categoryValue = trimmedCategory;
       const painValue = form.pain.trim();
-
+  
       if (!categoryValue) {
         showToast("Укажите категорию продукта", "warn");
         return;
       }
-
+  
       if (!painValue) {
         showToast("Опишите боль потребителя, чтобы продолжить", "warn");
         return;
       }
-
+  
       setIsGenerating(true);
-
+  
+      const sleep = (ms: number) =>
+        new Promise((resolve) => setTimeout(resolve, ms));
+  
       try {
         const include = buildIncludeFromDiagnostics(form.diagnostics);
-
-        const response = await fetch("/api/generate", {
+  
+        const createJobResponse = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -544,18 +547,76 @@ export default function GeneratorForm({
             projectId: projectId || undefined
           })
         });
-
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({}));
-          throw new Error(error?.error || `API ${response.status}`);
+  
+        const createJobData = await createJobResponse.json().catch(() => ({}));
+  
+        if (!createJobResponse.ok) {
+          throw new Error(
+            createJobData?.error || `API ${createJobResponse.status}`
+          );
         }
-
-        const draft = await response.json();
-        onDraftGenerated?.(draft);
-        showToast(
-          "Готово! Ниже можете посмотреть и скачать полный паспорт продукта.",
-          "ok"
-        );
+  
+        const jobId = createJobData?.jobId;
+        if (!jobId) {
+          throw new Error("Сервер не вернул jobId");
+        }
+  
+        let finished = false;
+        let guard = 0;
+  
+        while (!finished) {
+          guard += 1;
+  
+          if (guard > 10) {
+            throw new Error(
+              "Генерация заняла слишком много шагов. Остановлено для безопасности."
+            );
+          }
+  
+          const processResponse = await fetch(`/api/generate/process/${jobId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+  
+          const processData = await processResponse.json().catch(() => ({}));
+  
+          if (!processResponse.ok) {
+            throw new Error(
+              processData?.error || `PROCESS ${processResponse.status}`
+            );
+          }
+  
+          const statusResponse = await fetch(`/api/generate/status/${jobId}`, {
+            method: "GET",
+            cache: "no-store"
+          });
+  
+          const statusData = await statusResponse.json().catch(() => ({}));
+  
+          if (!statusResponse.ok) {
+            throw new Error(
+              statusData?.error || `STATUS ${statusResponse.status}`
+            );
+          }
+  
+          if (statusData?.status === "failed") {
+            throw new Error(
+              statusData?.error || "Генерация завершилась ошибкой"
+            );
+          }
+  
+          if (statusData?.status === "completed" && statusData?.draft) {
+            onDraftGenerated?.(statusData.draft);
+            showToast(
+              "Готово! Ниже можете посмотреть и скачать полный паспорт продукта.",
+              "ok"
+            );
+            finished = true;
+            break;
+          }
+  
+          await sleep(900);
+        }
       } catch (error) {
         console.error(error);
         const message =

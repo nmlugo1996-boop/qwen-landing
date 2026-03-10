@@ -1,52 +1,34 @@
 import { NextResponse } from "next/server";
-import generateModule from "../../../lib/generatePassport.js";
+import { createGenerationJob } from "../../../lib/generationJobs";
 
 export const runtime = "nodejs";
 
-function resolveRunGenerate(mod) {
-  if (!mod) return null;
-
-  if (typeof mod === "function") return mod;
-
-  if (typeof mod.runGenerate === "function") {
-    return mod.runGenerate.bind(mod);
-  }
-
-  if (mod.default) {
-    if (typeof mod.default === "function") {
-      return mod.default;
-    }
-    if (typeof mod.default.runGenerate === "function") {
-      return mod.default.runGenerate.bind(mod.default);
-    }
-  }
-
-  return null;
-}
-
 export async function POST(request) {
   try {
-    const runGenerate = resolveRunGenerate(generateModule);
+    const body = await request.json().catch(() => null);
 
-    if (!runGenerate) {
-      console.error(
-        "Generate API: runGenerate not found on imported module",
-        Object.keys(generateModule || {})
-      );
-
+    if (!body || typeof body !== "object") {
       return NextResponse.json(
-        { error: "runGenerate not available on generate module" },
-        { status: 500 }
+        { error: "Request body must be a JSON object" },
+        { status: 400 }
       );
     }
 
-    const body = await request.json();
-    const draft = await runGenerate(body);
+    const job = await createGenerationJob(body);
 
-    return NextResponse.json(draft);
+    return NextResponse.json(
+      {
+        ok: true,
+        jobId: job.id,
+        status: job.status
+      },
+      {
+        status: 202,
+        headers: { "Cache-Control": "no-store, must-revalidate" }
+      }
+    );
   } catch (error) {
-    console.error("Generate passport API error", error);
-
+    console.error("Create generation job error", error);
     return NextResponse.json(
       { error: error?.message || "Internal error" },
       { status: 500 }
