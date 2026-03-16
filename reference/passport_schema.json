@@ -1,248 +1,531 @@
 {
-  "$id": "https://example.com/ksp.schema.json",
+  "$id": "https://example.com/passport-clean.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cognitive-Sensory Product Passport",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "short_passport",
     "cognitive_block",
     "sensory_block",
     "branding",
     "marketing",
-    "production",
-    "regulatory",
+    "technology_and_composition",
+    "form_factor_packaging",
+    "star_reasons",
     "commerce",
     "validation_plan",
-    "appendices",
-    "sign_off_checklist"
+    "risks",
+    "conclusion"
   ],
   "properties": {
     "short_passport": {
       "type": "object",
-      "required": ["category", "name", "audience", "pain", "uniqueness"],
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "name",
+        "audience",
+        "pain",
+        "uniqueness",
+        "key_idea",
+        "one_liner"
+      ],
       "properties": {
         "category": { "type": "string" },
         "name": { "type": "string" },
         "audience": { "type": "string" },
         "pain": { "type": "string" },
         "uniqueness": { "type": "string" },
-        "portion_g": { "type": "number" },
-        "protein_per_portion_g": { "type": "number" },
-        "calories_per_portion_kcal": { "type": "number" },
-        "rrc_rub": { "type": ["number", "string"] },
+        "key_idea": { "type": "string" },
         "one_liner": { "type": "string" },
+        "portion_g": { "type": ["number", "null"] },
+        "protein_per_portion_g": { "type": ["number", "null"] },
+        "calories_per_portion_kcal": { "type": ["number", "null"] },
+        "rrc_rub": { "type": ["number", "string", "null"] },
         "source_evidence_assumptions": { "type": "string" }
       }
     },
 
     "cognitive_block": {
       "type": "object",
-      "required": ["consumption_change", "rituals", "narratives", "desired_model", "education"],
+      "additionalProperties": false,
+      "required": [
+        "pain_disruption",
+        "consumption_change",
+        "rituals",
+        "narratives",
+        "desired_model",
+        "education"
+      ],
       "properties": {
-        "consumption_change": { "type": "array", "items": { "type": "string" } },
-        "rituals": { "type": "array", "items": { "type": "string" } },
-        "narratives": { "type": "array", "items": { "type": "string" } },
-        "desired_model": {
+        "pain_disruption": {
           "type": "object",
-          "required": ["thoughts", "feelings", "behaviors"],
+          "additionalProperties": false,
+          "required": [
+            "core_problem",
+            "why_existing_solutions_fail",
+            "why_this_pain_can_create_a_new_category"
+          ],
           "properties": {
-            "thoughts": { "type": "array", "items": { "type": "string" } },
-            "feelings": { "type": "array", "items": { "type": "string" } },
-            "behaviors": { "type": "array", "items": { "type": "string" } }
+            "core_problem": { "type": "string" },
+            "why_existing_solutions_fail": { "type": "string" },
+            "why_this_pain_can_create_a_new_category": { "type": "string" }
           }
         },
-        "education": { "type": "array", "items": { "type": "string" } },
+        "consumption_change": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "new_market",
+            "what_replaces",
+            "new_monetizable_value",
+            "why_people_will_pay"
+          ],
+          "properties": {
+            "new_market": { "type": "string" },
+            "what_replaces": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            },
+            "new_monetizable_value": { "type": "string" },
+            "why_people_will_pay": { "type": "string" }
+          }
+        },
+        "rituals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "behavior_change",
+            "new_rituals",
+            "usage_contexts"
+          ],
+          "properties": {
+            "behavior_change": { "type": "string" },
+            "new_rituals": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            },
+            "usage_contexts": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "narratives": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "headlines",
+            "landing_copy",
+            "brand_story"
+          ],
+          "properties": {
+            "headlines": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            },
+            "landing_copy": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            },
+            "brand_story": { "type": "string" }
+          }
+        },
+        "desired_model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["thoughts", "feelings", "behaviors"],
+          "properties": {
+            "thoughts": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            },
+            "feelings": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            },
+            "behaviors": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "education": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "channels",
+            "mechanics",
+            "low_budget_options",
+            "scalable_options"
+          ],
+          "properties": {
+            "channels": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            },
+            "mechanics": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            },
+            "low_budget_options": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            },
+            "scalable_options": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            }
+          }
+        },
         "source_evidence_assumptions": { "type": "string" }
       }
     },
 
     "sensory_block": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["visual", "audio", "smell", "tactile", "taste"],
       "properties": {
-        "visual": {
-          "type": "object",
-          "properties": {
-            "desired_experience": { "type": "string" },
-            "measurable_goal": { "type": "string" },
-            "protocol_test": { "type": ["object", "array"] },
-            "analysis_method": { "type": "string" },
-            "acceptance_criteria": { "type": "string" },
-            "recommendations": { "type": "array", "items": { "type": "string" } }
-          }
-        },
-        "audio": {
-          "type": "object",
-          "properties": {
-            "desired_experience": { "type": "string" },
-            "measurable_goal": { "type": "string" },
-            "protocol_test": { "type": ["object", "array"] },
-            "analysis_method": { "type": "string" },
-            "acceptance_criteria": { "type": "string" },
-            "recommendations": { "type": "array", "items": { "type": "string" } }
-          }
-        },
-        "smell": {
-          "type": "object",
-          "properties": {
-            "desired_experience": { "type": "string" },
-            "measurable_goal": { "type": "string" },
-            "protocol_test": { "type": ["object", "array"] },
-            "analysis_method": { "type": "string" },
-            "acceptance_criteria": { "type": "string" },
-            "recommendations": { "type": "array", "items": { "type": "string" } }
-          }
-        },
-        "tactile": {
-          "type": "object",
-          "properties": {
-            "desired_experience": { "type": "string" },
-            "measurable_goal": { "type": "string" },
-            "protocol_test": { "type": ["object", "array"] },
-            "analysis_method": { "type": "string" },
-            "acceptance_criteria": { "type": "string" },
-            "recommendations": { "type": "array", "items": { "type": "string" } }
-          }
-        },
-        "taste": {
-          "type": "object",
-          "properties": {
-            "desired_experience": { "type": "string" },
-            "measurable_goal": { "type": "string" },
-            "protocol_test": { "type": ["object", "array"] },
-            "analysis_method": { "type": "string" },
-            "acceptance_criteria": { "type": "string" },
-            "recommendations": { "type": "array", "items": { "type": "string" } }
-          }
-        },
+        "visual": { "$ref": "#/definitions/sensory_modality" },
+        "audio": { "$ref": "#/definitions/sensory_modality" },
+        "smell": { "$ref": "#/definitions/sensory_modality" },
+        "tactile": { "$ref": "#/definitions/sensory_modality" },
+        "taste": { "$ref": "#/definitions/sensory_modality" },
         "source_evidence_assumptions": { "type": "string" }
       }
     },
 
     "branding": {
       "type": "object",
-      "required": ["story", "promise", "brand_core", "context", "customer_journey"],
+      "additionalProperties": false,
+      "required": [
+        "story",
+        "promise",
+        "identity_effect",
+        "context",
+        "brand_core",
+        "customer_journey",
+        "growth_strategy"
+      ],
       "properties": {
         "story": { "type": "string" },
         "promise": { "type": "string" },
-        "brand_core": { "type": "array", "items": { "type": "string" } },
+        "identity_effect": { "type": "string" },
         "context": {
           "type": "object",
+          "additionalProperties": false,
+          "required": ["favorable", "unfavorable"],
           "properties": {
-            "favorable": { "type": "array", "items": { "type": "string" } },
-            "unfavorable": { "type": "array", "items": { "type": "string" } }
+            "favorable": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            },
+            "unfavorable": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            }
           }
         },
-        "customer_journey": { "type": "array", "items": { "type": "string" } },
+        "brand_core": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name_logic",
+            "logo_idea",
+            "slogan",
+            "distinctive_assets"
+          ],
+          "properties": {
+            "name_logic": { "type": "string" },
+            "logo_idea": { "type": "string" },
+            "slogan": { "type": "string" },
+            "distinctive_assets": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "customer_journey": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["stage", "customer_feeling", "next_trigger"],
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "awareness",
+                  "interest",
+                  "trial",
+                  "repeat",
+                  "loyalty",
+                  "advocacy"
+                ]
+              },
+              "customer_feeling": { "type": "string" },
+              "next_trigger": { "type": "string" }
+            }
+          }
+        },
+        "growth_strategy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["year_1", "year_3", "year_5", "year_10"],
+          "properties": {
+            "year_1": { "type": "string" },
+            "year_3": { "type": "string" },
+            "year_5": { "type": "string" },
+            "year_10": { "type": "string" }
+          }
+        },
         "source_evidence_assumptions": { "type": "string" }
       }
     },
 
     "marketing": {
       "type": "object",
-      "required": ["segments", "product_spec", "pricing", "channels", "promotional_tactics"],
+      "additionalProperties": false,
+      "required": [
+        "segments",
+        "base_product",
+        "line_extension",
+        "pricing",
+        "channels",
+        "promotion"
+      ],
       "properties": {
         "segments": {
           "type": "array",
+          "minItems": 3,
           "items": {
             "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "segment",
+              "need",
+              "purchase_trigger",
+              "why_they_buy"
+            ],
             "properties": {
               "segment": { "type": "string" },
               "need": { "type": "string" },
-              "channels": { "type": "array", "items": { "type": "string" } }
-            },
-            "required": ["segment", "need"]
+              "purchase_trigger": { "type": "string" },
+              "why_they_buy": { "type": "string" }
+            }
           }
         },
-        "product_spec": { "type": "object" },
-        "pricing": { "type": "object" },
-        "channels": { "type": "array", "items": { "type": "string" } },
-        "promotional_tactics": { "type": "array", "items": { "type": "string" } },
-        "source_evidence_assumptions": { "type": "string" }
-      }
-    },
-
-    "production": {
-      "type": "object",
-      "required": ["technology_process_steps", "qc_checkpoints", "shelf_life_days", "packaging_spec"],
-      "properties": {
-        "technology_process_steps": {
+        "base_product": { "type": "string" },
+        "line_extension": {
           "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "step": { "type": "string" },
-              "detail": { "type": "string" },
-              "ccp": { "type": "string" }
-            },
-            "required": ["step"]
-          }
+          "minItems": 2,
+          "items": { "type": "string" }
         },
-        "qc_checkpoints": { "type": "array", "items": { "type": "object" } },
-        "shelf_life_days": { "type": "number" },
-        "shelf_life_method": { "type": "string" },
-        "packaging_spec": {
+        "pricing": {
           "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "base_rrc_rub",
+            "pricing_logic",
+            "models"
+          ],
           "properties": {
-            "material": { "type": "string" },
-            "o2_transmission_rate": { "type": "string" },
-            "moisture_transmission": { "type": "string" },
-            "seal_strength": { "type": "string" }
+            "base_rrc_rub": { "type": ["number", "string"] },
+            "pricing_logic": { "type": "string" },
+            "models": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            }
           }
         },
-        "microbiology_limits": { "type": "object" },
-        "production_constraints": { "type": "array", "items": { "type": "string" } },
+        "channels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["start", "growth", "scale"],
+          "properties": {
+            "start": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            },
+            "growth": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            },
+            "scale": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "promotion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["low_budget", "testable", "scalable"],
+          "properties": {
+            "low_budget": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            },
+            "testable": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            },
+            "scalable": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "type": "string" }
+            }
+          }
+        },
         "source_evidence_assumptions": { "type": "string" }
       }
     },
 
-    "regulatory": {
+    "technology_and_composition": {
       "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_technology",
+        "production_logic",
+        "quality_stability",
+        "constraints",
+        "composition_logic"
+      ],
       "properties": {
-        "allowed_claims": { "type": "array", "items": { "type": "string" } },
-        "forbidden_claims": { "type": "array", "items": { "type": "string" } },
-        "labeling_requirements": { "type": "array", "items": { "type": "string" } },
-        "legal_notes": { "type": "string" },
+        "core_technology": { "type": "string" },
+        "production_logic": { "type": "string" },
+        "quality_stability": { "type": "string" },
+        "constraints": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string" }
+        },
+        "composition_logic": { "type": "string" },
+        "shelf_life_days": { "type": ["number", "null"] },
         "source_evidence_assumptions": { "type": "string" }
       }
+    },
+
+    "form_factor_packaging": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_form",
+        "packaging_format",
+        "consumption_support",
+        "perceived_value",
+        "repeat_purchase_triggers"
+      ],
+      "properties": {
+        "product_form": { "type": "string" },
+        "packaging_format": { "type": "string" },
+        "consumption_support": { "type": "string" },
+        "perceived_value": { "type": "string" },
+        "repeat_purchase_triggers": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "star_reasons": {
+      "type": "array",
+      "minItems": 5,
+      "items": { "type": "string" }
     },
 
     "commerce": {
       "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unit_economics",
+        "pricing_models"
+      ],
       "properties": {
         "unit_economics": {
           "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "raw_material_cost_rub_per_unit",
+            "packaging_cost_rub_per_unit",
+            "production_cost_rub_per_unit",
+            "logistics_rub_per_unit",
+            "cost_per_unit_rub",
+            "rrc_assumed_rub",
+            "gross_margin_percent",
+            "notes"
+          ],
           "properties": {
-            "raw_material_cost_rub_per_unit": { "type": "number" },
-            "packaging_cost_rub_per_unit": { "type": "number" },
-            "production_cost_rub_per_unit": { "type": "number" },
-            "logistics_rub_per_unit": { "type": "number" },
-            "opex_alloc_rub_per_unit": { "type": "number" },
-            "cost_per_unit_rub": { "type": "number" },
-            "rrc_assumed_rub": { "type": "number" },
+            "raw_material_cost_rub_per_unit": { "type": ["number", "string"] },
+            "packaging_cost_rub_per_unit": { "type": ["number", "string"] },
+            "production_cost_rub_per_unit": { "type": ["number", "string"] },
+            "logistics_rub_per_unit": { "type": ["number", "string"] },
+            "opex_alloc_rub_per_unit": { "type": ["number", "string", "null"] },
+            "cost_per_unit_rub": { "type": ["number", "string"] },
+            "rrc_assumed_rub": { "type": ["number", "string"] },
             "gross_margin_percent": { "type": ["number", "string"] },
             "notes": { "type": "string" }
           }
         },
-        "pricing_models": { "type": "array", "items": { "type": "object" } },
-        "cac_target_rub": { "type": "number" },
-        "ltv_target_rub": { "type": "number" },
-        "break_even_volume_months": { "type": ["number", "string"] },
+        "pricing_models": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string" }
+        },
+        "cac_target_rub": { "type": ["number", "string", "null"] },
+        "ltv_target_rub": { "type": ["number", "string", "null"] },
+        "break_even_months": { "type": ["number", "string", "null"] },
         "source_evidence_assumptions": { "type": "string" }
       }
     },
 
     "validation_plan": {
       "type": "array",
+      "minItems": 6,
       "items": {
         "type": "object",
-        "required": ["name", "hypothesis", "method", "kpi"],
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "hypothesis",
+          "method",
+          "kpi",
+          "threshold",
+          "duration_days",
+          "budget_rub"
+        ],
         "properties": {
           "name": { "type": "string" },
           "hypothesis": { "type": "string" },
           "method": { "type": "string" },
           "kpi": { "type": "string" },
           "threshold": { "type": "string" },
-          "duration_days": { "type": "number" },
+          "duration_days": { "type": ["number", "string"] },
           "budget_rub": { "type": ["number", "string"] }
         }
       }
@@ -250,57 +533,88 @@
 
     "risks": {
       "type": "array",
+      "minItems": 5,
       "items": {
         "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "risk",
+          "category",
+          "probability",
+          "impact",
+          "mitigation"
+        ],
         "properties": {
           "risk": { "type": "string" },
+          "category": {
+            "type": "string",
+            "enum": [
+              "product",
+              "technology",
+              "behavioral",
+              "marketing",
+              "pricing",
+              "operational",
+              "regulatory"
+            ]
+          },
           "probability": { "type": "string" },
           "impact": { "type": "string" },
           "mitigation": { "type": "string" }
-        },
-        "required": ["risk"]
+        }
       }
     },
 
-    "appendices": {
+    "conclusion": {
       "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "why_viable",
+        "best_first_test_market",
+        "first_things_to_validate",
+        "next_step"
+      ],
       "properties": {
-        "sensory_protocol_template": { "type": "object" },
-        "product_card_example": { "type": "object" },
-        "unit_economics_template": { "type": "string" },
-        "qa_checklist_template": { "type": "array", "items": { "type": "string" } }
-      }
-    },
-
-    "sign_off_checklist": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "item": { "type": "string" },
-          "status": { "type": "string", "enum": ["Yes", "No", "N/A"] },
-          "comments": { "type": "string" }
+        "why_viable": { "type": "string" },
+        "best_first_test_market": { "type": "string" },
+        "first_things_to_validate": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "type": "string" }
         },
-        "required": ["item", "status"]
+        "next_step": { "type": "string" }
       }
-    },
-
-    "required_data": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "param": { "type": "string" },
-          "unit": { "type": "string" },
-          "recommended": { "type": "string" }
-        },
-        "required": ["param"]
-      }
-    },
-
-    "source_overall": { "type": "string" },
-    "notes": { "type": "string" }
+    }
   },
 
-  "additionalProperties": true
+  "definitions": {
+    "sensory_modality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "desired_experience",
+        "memory_marker",
+        "brand_role",
+        "measurable_goal",
+        "protocol_test",
+        "analysis_method",
+        "acceptance_criteria",
+        "recommendations"
+      ],
+      "properties": {
+        "desired_experience": { "type": "string" },
+        "memory_marker": { "type": "string" },
+        "brand_role": { "type": "string" },
+        "measurable_goal": { "type": "string" },
+        "protocol_test": { "type": ["object", "array", "string"] },
+        "analysis_method": { "type": "string" },
+        "acceptance_criteria": { "type": "string" },
+        "recommendations": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
 }
