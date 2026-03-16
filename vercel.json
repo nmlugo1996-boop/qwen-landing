@@ -1,12 +1,14 @@
+@'
 {
-    "functions": {
-      "api/**/*.ts": {
-        "memory": 2048,
-        "maxDuration": 300
-      },
-      "pages/api/**/*.ts": {
-        "memory": 2048,
-        "maxDuration": 300
-      }
+  "functions": {
+    "app/api/**/route.ts": {
+      "memory": 2048,
+      "maxDuration": 300
+    },
+    "api/**/*.ts": {
+      "memory": 2048,
+      "maxDuration": 300
     }
   }
+}
+'@ > vercel.json
